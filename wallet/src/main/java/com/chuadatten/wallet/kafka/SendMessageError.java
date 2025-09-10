@@ -1,36 +1,40 @@
-package com.chuadatten.wallet.kafka ;
+package com.chuadatten.wallet.kafka;
 
-import jakarta.persistence.*;
-import lombok.*;
+
+import java.time.Instant;
+
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
-@Entity
-@Table(name = "send_message_error")
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Document(collection = "send_message_error")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class)
 public class SendMessageError {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "BINARY(16)", updatable = false, nullable = false)
-    private UUID id;
 
-    @Column(name = "topic", nullable = false, length = 255)
+    @Id
+    private String id;
+
+    @Field("topic")
     private String topic;
 
-    @Column(columnDefinition = "TEXT")
+    @Field("message")
     private String message;
 
-    @Column(nullable = false, length = 50)
+    @Field("status")
     private String status;
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Field("created_at")
+    private Instant createdAt;
 }

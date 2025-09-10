@@ -1,14 +1,9 @@
 package com.chuadatten.transaction.outbox;
 
 import java.util.List;
-import java.util.UUID;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-@Repository
-public interface OutboxRepository extends JpaRepository<OutboxEvent, UUID> {
+public interface OutboxRepository extends MongoRepository<OutboxEvent, String> {
 
-    // Lấy tất cả event chưa publish
-    List<OutboxEvent> findByStatusOrderByCreatedAtAsc(String status);
 }

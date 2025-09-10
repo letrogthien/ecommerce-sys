@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -31,10 +32,10 @@ public class Wallet {
     private String currency;
 
     @Column(name = "balance", nullable = false)
-    private Long balance;
+    private BigInteger balance;
 
     @Column(name = "reserved", nullable = false)
-    private Long reserved;
+    private BigInteger reserved;
 
     @Column(name = "version", nullable = false)
     private Long version;
@@ -63,10 +64,10 @@ public class Wallet {
             currency = "VND";
         }
         if (balance == null) {
-            balance = 0L;
+            balance = BigInteger.ZERO;
         }
         if (reserved == null) {
-            reserved = 0L;
+            reserved = BigInteger.ZERO;
         }
         if (version == null) {
             version = 0L;

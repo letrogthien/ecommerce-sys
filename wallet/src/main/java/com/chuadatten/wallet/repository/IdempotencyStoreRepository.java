@@ -8,6 +8,6 @@ import com.chuadatten.wallet.entity.IdempotencyStore;
 
 @Repository
 public interface IdempotencyStoreRepository extends BaseRepository<IdempotencyStore> {
-
+    boolean existsByIdempotencyKey(String idempotencyKey);
     Optional<IdempotencyStore> findByIdempotencyKey(String idempotencyKey);
 }

@@ -1,8 +1,6 @@
 package com.chuadatten.transaction.kafka;
 
 
-import com.chuadatten.transaction.entity.SendMessageError;
-import com.chuadatten.transaction.repository.MessageErrorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;

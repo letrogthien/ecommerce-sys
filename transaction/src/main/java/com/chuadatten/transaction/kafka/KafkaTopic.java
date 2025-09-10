@@ -1,13 +1,18 @@
 package com.chuadatten.transaction.kafka;
 
 import lombok.Getter;
+
 @Getter
 public enum KafkaTopic {
-    REGISTER("auth-register"),
-    FORGOT_PASSWORD("auth-forgot-password"),
-    CHANGE_PASSWORD("auth-change-password"),
-    SEND_OTP("auth-send-otp"),
-    STRANGE_DEVICE("auth-strange-device");
+
+    ORDER_CREATED("transaction.order.created"),
+    PRODUCT_RESERVATION_SUCCESS("product.reservation.success"),
+    PRODUCT_RESERVATION_FAILED("product.reservation.failed"),
+    PAYMENT_PROCESSING("payment.payment.processing"),
+    PAYMENT_SUCCESS("payment.success"),
+    ORDER_COMFIRM_DATA("transaction.order.confirm.data"),
+    CHECKING_ORDER_RETURN("order.checking.status"),
+    ORDER_SUCCESS("transaction.order.success");
 
     private final String topicName;
 

@@ -1,11 +1,13 @@
 package com.chuadatten.wallet.entity;
 
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.chuadatten.wallet.common.PaymentMethod;
 import com.chuadatten.wallet.common.PaymentType;
 import com.chuadatten.wallet.common.Status;
 
@@ -50,11 +52,15 @@ public class Payment {
     @Column(name = "provider_payment_id", length = 255)
     private String providerPaymentId;
 
-    @Column(name = "type", nullable = false, length = 30)
+    @Column(name = "type", length = 30)
     private PaymentType type;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", length = 30)
+    private PaymentMethod paymentMethod;
+
     @Column(name = "amount", nullable = false)
-    private int amount;
+    private BigInteger amount;
 
     @Column(name = "currency", nullable = false, columnDefinition = "CHAR(3)")
     private String currency;
@@ -82,9 +88,7 @@ public class Payment {
 
     @PrePersist
     protected void onCreate() {
-        if (id == null) {
-            id = UUID.randomUUID();
-        }
+
         if (status == null) {
             status = Status.PENDING;
         }

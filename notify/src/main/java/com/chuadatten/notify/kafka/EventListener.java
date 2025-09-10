@@ -1,14 +1,18 @@
 package com.chuadatten.notify.kafka;
 
+import java.util.UUID;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import com.chuadatten.event.OtpEvent;
 import com.chuadatten.event.PasswordResetEvent;
+import com.chuadatten.event.PayUrlEvent;
 import com.chuadatten.event.RegistrationEvent;
 import com.chuadatten.event.StrangeDevice;
 import com.chuadatten.notify.mail.EmailSender;
+import com.chuadatten.notify.socket.NotifyService;
 
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EventListener {
     private final EmailSender emailSender;
+    private final NotifyService notifyService;
     @KafkaListener(topics = "user-register", concurrency = "3",groupId = "group1")
     public void listenRegister(ConsumerRecord<String ,RegistrationEvent> consumerRecord) throws MessagingException {
         RegistrationEvent registrationEvent =  consumerRecord.value();
@@ -46,6 +51,10 @@ public class EventListener {
     }
 
 
-
+    @KafkaListener(topics = "payment.url.success", concurrency = "3",groupId = "group1")
+    public void listenPaymentUrlSuccess(PayUrlEvent payUrlEvent) {
+        String url =  payUrlEvent.getPayUrl();
+        notifyService.pushToUser(payUrlEvent.getUserId(), url);
+    }
 
 }

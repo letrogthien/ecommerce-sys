@@ -56,6 +56,7 @@ CREATE TABLE payments (
   provider VARCHAR(50) DEFAULT NULL,  -- e.g. 'vnpay'
   provider_payment_id VARCHAR(255) DEFAULT NULL,
   type VARCHAR(30) NOT NULL, -- 'topup' | 'order_payment' | 'refund'
+  payment_method VARCHAR(30), -- 'wallet' | 'direct'
   amount BIGINT NOT NULL,
   currency CHAR(3) NOT NULL,
   status VARCHAR(30) NOT NULL , -- created/processing/succeeded/failed
