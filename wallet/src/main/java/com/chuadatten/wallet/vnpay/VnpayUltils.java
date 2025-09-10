@@ -1,5 +1,6 @@
 package com.chuadatten.wallet.vnpay;
 
+import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -32,7 +33,7 @@ public class VnpayUltils {
         return type.name() + "-" + paymentId + "-" + System.currentTimeMillis();
     }
 
-    public String payUrl(String ip, int total, String detail, String ref)
+    public String payUrl(String ip, BigInteger total, String detail, String ref)
             throws InvalidKeyException, NoSuchAlgorithmException {
         var params = buildParams(ip, total, detail, ref);
         return buildUrl(params);
@@ -40,7 +41,7 @@ public class VnpayUltils {
     }
 
     public String refundUrl(String ip,
-            int total,
+            BigInteger total,
             String orderInfo,
             String txnRef,
             String vnpTransactionNo,
@@ -136,7 +137,7 @@ public class VnpayUltils {
 
     }
 
-    private Map<String, String> buildParams(String ip, int total, String detail, String ref) {
+    private Map<String, String> buildParams(String ip, BigInteger total, String detail, String ref) {
         String vnpVersion = payConfig.getVnpVersion();
         String vnpCommand = payConfig.getVnpCommand();
         String vnpOrderInfo = detail.trim();
@@ -144,7 +145,7 @@ public class VnpayUltils {
         String vnpTxnRef = ref;
         String vnpIpAddr = ip;
         String vnpTmnCode = payConfig.getVnpTmnCode();
-        int amount = total * 100;
+        BigInteger amount = total.multiply(BigInteger.valueOf(100));
         Map<String, String> vnpParams = new HashMap<>();
         vnpParams.put("vnp_Version", vnpVersion);
         vnpParams.put("vnp_Command", vnpCommand);
@@ -171,14 +172,14 @@ public class VnpayUltils {
 
     private Map<String, String> buildParamsRefund(
             String ip,
-            int total,
+            BigInteger total,
             String orderInfo,
             String txnRef,
             String vnpTransactionNo,
             String transDate) {
         String vnpVersion = payConfig.getVnpVersion();
         String vnpTmnCode = payConfig.getVnpTmnCode();
-        int amount = total * 100;
+        BigInteger amount = total.multiply(BigInteger.valueOf(100));
 
         Map<String, String> vnpParams = new HashMap<>();
         vnpParams.put("vnp_Version", vnpVersion);

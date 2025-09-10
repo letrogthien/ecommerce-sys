@@ -4,7 +4,7 @@ vnpay:
   vnpTmnCode: XTNKANRH
   vnpHashSecret: FNABMOP7AXKQFVWBIZE63HEIW7NAHO96
   vnpHashType: HmacSHA512
-  vnpReturnUrl: http://localhost:8084/api/v1/payment/vnpay_return
+  vnpReturnUrl: http://localhost:8084/api/v1/wallet-service/payments/vnpay_return
   vnpBankCode: VNPAYQR
   vnpPayUrl: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
 

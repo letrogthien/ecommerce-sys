@@ -1,10 +1,10 @@
 package com.chuadatten.wallet.kafka;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.UUID;
 
 @Repository
-public interface MessageErrorRepository extends JpaRepository<SendMessageError, UUID> {
+public interface MessageErrorRepository extends MongoRepository<SendMessageError, String>{
+    
 }

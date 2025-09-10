@@ -1,29 +1,21 @@
 package com.chuadatten.wallet.service;
 
-import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 
-import com.chuadatten.wallet.common.PaymentType;
+import com.chuadatten.wallet.common.PaymentMethod;
 import com.chuadatten.wallet.dto.PaymentAttemptDto;
 import com.chuadatten.wallet.dto.PaymentDto;
 import com.chuadatten.wallet.responses.ApiResponse;
 import com.chuadatten.wallet.vnpay.VnpayReturnDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import lombok.NonNull;
 
 public interface PaymentService {
 
-    /**
-     * Create a new payment
-     */
-    void createPayment(@NonNull UUID userId, UUID walletId, @NonNull UUID orderId,
-            String provider, String providerPaymentId, PaymentType paymentType, BigInteger amount, String currency,
-            String metadataJson, String idempotencyKey);
 
     /**
      * Query payment status
@@ -60,7 +52,7 @@ public interface PaymentService {
      * @throws InvalidKeyException 
      */
 
-     ApiResponse<String> payment(UUID paymentId, String ip , UUID userId) throws InvalidKeyException, NoSuchAlgorithmException,JsonProcessingException;
+     ApiResponse<String> payment(UUID paymentId, String ip , UUID userId, PaymentMethod paymentMethod) throws InvalidKeyException, NoSuchAlgorithmException,JsonProcessingException;
     /**
      * Retry payment when in pending status
      * 

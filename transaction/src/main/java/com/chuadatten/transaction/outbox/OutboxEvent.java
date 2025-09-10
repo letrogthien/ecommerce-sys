@@ -1,25 +1,15 @@
 package com.chuadatten.transaction.outbox;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Builder;
-import lombok.Data;
-
-import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
-import java.util.UUID;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
-@Entity
-@Table(name = "transactional_outbox")
+import java.time.Instant;
+
+@Document(collection = "outbox_event")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,31 +18,35 @@ import java.util.UUID;
 public class OutboxEvent {
 
     @Id
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID id;   // UUID event
+    private String id;
 
-    @Column(name = "aggregate_type", nullable = false, length = 50)
+    @Field("aggregate_type")
     private String aggregateType;
 
-    @Column(name = "aggregate_id", columnDefinition = "BINARY(16)")
-    private UUID aggregateId;
+    @Field("aggregate_id")
+    @Indexed
+    private String aggregateId;
 
-    @Column(name = "event_type", nullable = false, length = 100)
+    @Field("event_type")
+    @Indexed
     private String eventType;
 
-    @Lob
-    @Column(name = "payload", nullable = false, columnDefinition = "JSON")
-    private String payload;   // lưu JSON string
+    private String payload;
 
-    @Column(name = "status", nullable = false, length = 20)
-    private String status = "PENDING";   // PENDING / PUBLISHED / FAILED
+    private String headers;
 
-    @Column(name = "attempts", nullable = false)
+    @Builder.Default
+    @Indexed
+    private String status = "PENDING";
+
+    @Builder.Default
     private int attempts = 0;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Field("created_at")
+    @Builder.Default
     private Instant createdAt = Instant.now();
 
-    @Column(name = "published_at")
+    @Field("published_at")
+    @Indexed
     private Instant publishedAt;
 }

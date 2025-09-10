@@ -50,13 +50,6 @@ public interface BankAccountService {
      */
     ApiResponse<BankAccountDto> updateBankAccount(UUID accountId, UUID userId, String bankCode, String accountName);
 
-    /**
-     * Get all bank accounts with pagination (admin function)
-     * @param page Page number
-     * @param size Page size
-     * @return ApiResponse containing paginated list of bank accounts
-     */
-    ApiResponse<Page<BankAccountDto>> getAllBankAccounts(int page, int size);
 
     /**
      * Get all bank accounts of a user with pagination
