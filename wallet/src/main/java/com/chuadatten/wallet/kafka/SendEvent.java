@@ -1,7 +1,5 @@
 package com.chuadatten.wallet.kafka;
 
-
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;

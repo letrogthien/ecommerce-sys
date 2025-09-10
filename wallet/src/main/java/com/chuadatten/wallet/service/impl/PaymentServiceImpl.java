@@ -1,10 +1,7 @@
 package com.chuadatten.wallet.service.impl;
 
-import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -12,18 +9,28 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.chuadatten.wallet.common.PaymentType;
+import com.chuadatten.event.PaymentProcessEvent;
+import com.chuadatten.event.PaymentSuccessedEvent;
+import com.chuadatten.wallet.common.JsonParserUtil;
+import com.chuadatten.wallet.common.PaymentMethod;
 import com.chuadatten.wallet.common.Status;
 import com.chuadatten.wallet.dto.PaymentAttemptDto;
 import com.chuadatten.wallet.dto.PaymentDto;
 import com.chuadatten.wallet.entity.Payment;
 import com.chuadatten.wallet.entity.PaymentAttempt;
+import com.chuadatten.wallet.entity.Wallet;
+import com.chuadatten.wallet.entity.WalletReservation;
 import com.chuadatten.wallet.exceptions.CustomException;
 import com.chuadatten.wallet.exceptions.ErrorCode;
+import com.chuadatten.wallet.kafka.KafkaTopic;
 import com.chuadatten.wallet.mapper.PaymentAttemptMapper;
 import com.chuadatten.wallet.mapper.PaymentMapper;
+import com.chuadatten.wallet.outbox.OutboxEvent;
+import com.chuadatten.wallet.outbox.OutboxRepository;
 import com.chuadatten.wallet.repository.PaymentAttemptRepository;
 import com.chuadatten.wallet.repository.PaymentRepository;
+import com.chuadatten.wallet.repository.WalletRepository;
+import com.chuadatten.wallet.repository.WalletReservationRepository;
 import com.chuadatten.wallet.responses.ApiResponse;
 import com.chuadatten.wallet.service.PaymentService;
 import com.chuadatten.wallet.vnpay.VnpayReturnDto;
@@ -31,7 +38,7 @@ import com.chuadatten.wallet.vnpay.VnpayUltils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.NonNull;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -42,18 +49,15 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentAttemptRepository paymentAttemptRepository;
     private final VnpayUltils vnpayUltils;
     private final PaymentAttemptMapper paymentAttemptMapper;
+    private final OutboxRepository outboxRepository;
+    private final JsonParserUtil jsonParserUtil;
+    private final WalletReservationRepository walletReservationRepository;
+    private final WalletRepository walletRepository;
 
     @Override
-    public void createPayment(@NonNull UUID userId, UUID walletId, @NonNull UUID orderId, String provider,
-            String providerPaymentId, PaymentType paymentType, BigInteger amount, String currency, String metadataJson,
-            String idempotencyKey) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createPayment'");
-    }
-
-    @Override
-    public ApiResponse<String> payment(UUID paymentId, String ip, UUID userId)
+    public ApiResponse<String> payment(UUID paymentId, String ip, UUID userId, PaymentMethod paymentMethod)
             throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException {
+
         Payment pay = paymentRepository.findById(paymentId).orElseThrow(
                 () -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
         if (userId != pay.getUserId()) {
@@ -62,24 +66,38 @@ public class PaymentServiceImpl implements PaymentService {
         if (pay.getStatus() != Status.CREATED) {
             handlePaymentStatus(pay.getStatus());
         }
+        if (paymentMethod.equals(PaymentMethod.WALLET)) {
+            Wallet wallet = walletRepository.findById(userId).orElseThrow(
+                    () -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+            if (wallet.getBalance().compareTo(pay.getAmount()) < 0) {
+                throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
+            }
+            wallet.setBalance(wallet.getBalance().subtract(pay.getAmount()));
+            walletRepository.save(wallet);
+            WalletReservation walletReservation = WalletReservation.builder()
+                    .amount(pay.getAmount())
+                    .currency(pay.getCurrency())
+                    .orderId(UUID.fromString(pay.getOrderId().toString()))
+                    .walletId(wallet.getId())
+                    .status(Status.ACTIVE)
+                    .build();
+            walletReservationRepository.save(walletReservation);
 
-        String url = vnpayUltils.payUrl(ip, pay.getAmount(), pay.getMetadata(), pay.getTxnRef());
+        }
 
-        Map<String, Object> jsonMap = new HashMap<>();
-        jsonMap.put("ip", ip);
-        jsonMap.put("amount", pay.getAmount());
-        jsonMap.put("metadata", pay.getMetadata());
-        jsonMap.put("txnRef", pay.getTxnRef());
-
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonString = mapper.writeValueAsString(jsonMap);
-        PaymentAttempt paymentAttempt = new PaymentAttempt();
-        paymentAttempt.setAttemptData(jsonString);
-        paymentAttempt.setPaymentId(paymentId);
-        paymentAttempt.setStatus(Status.CREATED);
+        OutboxEvent outboxEvent = OutboxEvent.builder()
+                .aggregateId(paymentId.toString())
+                .aggregateType("PAYMENT")
+                .attempts(0)
+                .eventType(KafkaTopic.PAYMENT_PROCECSSING.name())
+                .payload(jsonParserUtil.toJson(PaymentProcessEvent.builder().orderId(pay.getOrderId().toString())
+                        .paymentId(pay.getId().toString()).ip(ip).paymentMethod(paymentMethod.toString()).build()))
+                .build();
+        outboxRepository.save(outboxEvent);
+        pay.setStatus(Status.PROCESSING);
 
         return ApiResponse.<String>builder()
-                .data(url)
+                .data("payment processing, please wait")
                 .build();
 
     }
@@ -131,6 +149,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Transactional
     public ApiResponse<PaymentDto> handleProviderCallback(VnpayReturnDto returnDto)
             throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException {
 
@@ -145,6 +164,23 @@ public class PaymentServiceImpl implements PaymentService {
         paymentAttempt.setProviderResponse(mapper.writeValueAsString(returnDto));
         paymentAttempt.setStatus(Status.SUCCEEDED);
 
+        PaymentSuccessedEvent paymentSuccessedEvent = PaymentSuccessedEvent.builder()
+                .orderId(payment.getOrderId().toString())
+                .paymentId(payment.getId().toString())
+                .userId(payment.getUserId().toString())
+                .build();
+        OutboxEvent outboxEvent = OutboxEvent.builder()
+                .eventType(KafkaTopic.PAYMENT_SUCCESS.name())
+                .payload(jsonParserUtil.toJson(paymentSuccessedEvent))
+                .aggregateId(payment.getId().toString())
+                .aggregateType("PAYMENT")
+                .status("PENDING")
+                .build();
+
+        outboxRepository.save(outboxEvent);
+        paymentRepository.save(payment);
+        paymentAttemptRepository.save(paymentAttempt);
+
         return ApiResponse.<PaymentDto>builder()
                 .data(paymentMapper.toDto(payment))
                 .build();
@@ -157,28 +193,18 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public void refundPayment(UUID paymentId, UUID sellerId, String ip) throws JsonProcessingException, InvalidKeyException, NumberFormatException, NoSuchAlgorithmException {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
-        if (payment.getStatus() != Status.SUCCEEDED) {
-            throw new CustomException(ErrorCode.PAYMENT_NOT_SUCCEEDED);
-        }
-        payment.setStatus(Status.REFUNDED);
-        PaymentAttempt paymentAttempt = paymentAttemptRepository.findByPaymentId(payment.getId());
-        ObjectMapper mapper = new ObjectMapper();
-        VnpayReturnDto returnDto = mapper.readValue(paymentAttempt.getProviderResponse(), VnpayReturnDto.class);
-        String refundsUrl= vnpayUltils.refundUrl(ip, Integer.parseInt(returnDto.getAmount()), returnDto.getOrderInfo(), returnDto.getTxnRef(), returnDto.getTransactionNo(), returnDto.getPayDate());
+    public void refundPayment(UUID paymentId, UUID sellerId, String ip)
+            throws JsonProcessingException, InvalidKeyException, NumberFormatException, NoSuchAlgorithmException {
+        return;
 
-        paymentRepository.save(payment);
- 
     }
 
     @Override
     public ApiResponse<PaymentAttemptDto> getPaymentAttempts(UUID paymentId) {
         PaymentAttempt paymentAttempt = paymentAttemptRepository.findByPaymentId(paymentId);
         return ApiResponse.<PaymentAttemptDto>builder()
-        .data(paymentAttemptMapper.toDto(paymentAttempt))
-        .build();
+                .data(paymentAttemptMapper.toDto(paymentAttempt))
+                .build();
     }
 
 }

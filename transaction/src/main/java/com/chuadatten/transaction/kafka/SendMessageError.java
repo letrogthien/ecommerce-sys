@@ -1,4 +1,4 @@
-package com.chuadatten.transaction.entity;
+package com.chuadatten.transaction.kafka;
 
 
 import java.time.Instant;

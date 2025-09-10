@@ -2,11 +2,15 @@ package com.chuadatten.user.requests;
 
 
 import jakarta.validation.constraints.Pattern;
+import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@Builder
+@Data
 public class ChangePwdRequest {
     private String oldPassword;
     @Pattern(

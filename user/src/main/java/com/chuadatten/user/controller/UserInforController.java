@@ -1,5 +1,18 @@
 package com.chuadatten.user.controller;
 
+import java.util.UUID;
+
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.chuadatten.user.anotation.JwtClaims;
 import com.chuadatten.user.dto.BillingAddressDto;
 import com.chuadatten.user.dto.PreferenceDto;
@@ -12,14 +25,9 @@ import com.chuadatten.user.services.UserInforService;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/user-service/users/me")
+@RequestMapping("/api/v1/user-service/users")
 @RequiredArgsConstructor
 public class UserInforController {
 
@@ -28,15 +36,22 @@ public class UserInforController {
     /**
      * Get current user info
      */
-    @GetMapping
-    public ApiResponse<UserInfDto> getUserInfo(@Parameter(hidden = true) @JwtClaims("id") UUID userId) {
+    @GetMapping("/id/{userId}")
+    public ApiResponse<UserInfDto> getUserInfo(@PathVariable UUID userId) {
         return userInforService.getUserById(userId);
+    }
+
+
+    @GetMapping("/name/{displayName}")
+    public ApiResponse<UserInfDto> getUserInfoByUserName(@PathVariable String displayName) {
+        return userInforService.getUserByUserName(displayName);
     }
 
     /**
      * Update user info
      */
-    @PutMapping
+    @PutMapping("/me")
+
     public ApiResponse<UserInfDto> updateUserInfo(
             @Parameter(hidden = true) @JwtClaims("id") UUID userId,
             @RequestBody UpdateUserRequest updateUserRequest
@@ -47,7 +62,7 @@ public class UserInforController {
     /**
      * Update user avatar
      */
-    @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<UserInfDto> updateAvatar(
             @Parameter(hidden = true) @JwtClaims("id") UUID userId,
             @RequestPart("avatar") MultipartFile avatar
@@ -58,15 +73,15 @@ public class UserInforController {
     /**
      * Get user preference
      */
-    @GetMapping("/preferences")
-    public ApiResponse<PreferenceDto> getPreference(@Parameter(hidden = true) @JwtClaims("id") UUID userId) {
+    @GetMapping("/preferences/{userId}")
+    public ApiResponse<PreferenceDto> getPreference(@PathVariable UUID userId) {
         return userInforService.getPreference(userId);
     }
 
     /**
      * Update user preference
      */
-    @PutMapping("/preferences")
+    @PutMapping("me/preferences")
     public ApiResponse<PreferenceDto> updatePreference(
             @Parameter(hidden = true) @JwtClaims("id") UUID userId,
             @RequestBody UpdatePreferenceRequest updatePreferenceRequest
@@ -77,7 +92,7 @@ public class UserInforController {
     /**
      * Get billing address
      */
-    @GetMapping("/billing-address")
+    @GetMapping("me/billing-address")
     public ApiResponse<BillingAddressDto> getBillingAddress(@Parameter(hidden = true) @JwtClaims("id") UUID userId) {
         return userInforService.getBillingAddress(userId);
     }
@@ -85,7 +100,7 @@ public class UserInforController {
     /**
      * Create billing address
      */
-    @PostMapping("/billing-address")
+    @PostMapping("me/billing-address")
     public ApiResponse<BillingAddressDto> createBillingAddress(
             @Parameter(hidden = true) @JwtClaims("id") UUID userId,
             @RequestBody BillingAddressRequest billingAddressRequest
@@ -96,11 +111,13 @@ public class UserInforController {
     /**
      * Update billing address
      */
-    @PutMapping("/billing-address")
+    @PutMapping("me/billing-address")
     public ApiResponse<BillingAddressDto> updateBillingAddress(
             @Parameter(hidden = true) @JwtClaims("id") UUID userId,
             @RequestBody BillingAddressRequest billingAddressRequest
     ) {
         return userInforService.updateBillingAddress(userId, billingAddressRequest);
     }
+
+
 }

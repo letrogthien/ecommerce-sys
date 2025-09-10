@@ -40,7 +40,9 @@ public enum ErrorCode {
      PAYMENT_REFUNDED("E030", "Payment refunded", HttpStatus.BAD_REQUEST), 
      PAYMENT_CREATED("E031", "Payment created", HttpStatus.CREATED), 
      PAYMENT_ERROR("E032", "Payment error", HttpStatus.BAD_REQUEST), 
-     PAYMENT_NOT_SUCCEEDED("E032", "Payment not succeeded", HttpStatus.BAD_REQUEST),
+     PAYMENT_NOT_SUCCEEDED("E032", "Payment not succeeded", HttpStatus.BAD_REQUEST), 
+     WALLET_NOT_FOUND("E033", "Wallet not found", HttpStatus.NOT_FOUND), 
+     INSUFFICIENT_BALANCE("E034", "Insufficient balance", HttpStatus.BAD_REQUEST),
     ;
 
     private final String code;

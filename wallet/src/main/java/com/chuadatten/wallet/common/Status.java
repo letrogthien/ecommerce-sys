@@ -23,7 +23,7 @@ public enum Status {
     SUCCEEDED,
     FAILED,
     CANCLED,
-    REFUNDED,
+    REFUNDED, COMPLETED,
     
     ;
 

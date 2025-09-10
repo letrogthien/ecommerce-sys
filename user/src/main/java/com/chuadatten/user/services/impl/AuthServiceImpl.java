@@ -11,9 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.chuadatten.event.OtpEvent;
 import com.chuadatten.event.PasswordResetEvent;
+import com.chuadatten.event.RegistrationEvent;
 import com.chuadatten.event.StrangeDevice;
 import com.chuadatten.user.anotation.CusAuditable;
 import com.chuadatten.user.common.ConstString;
+import com.chuadatten.user.common.JsonParserUtil;
 import com.chuadatten.user.common.RoleName;
 import com.chuadatten.user.common.Status;
 import com.chuadatten.user.common.TokenType;
@@ -28,10 +30,11 @@ import com.chuadatten.user.exceptions.CustomException;
 import com.chuadatten.user.exceptions.ErrorCode;
 import com.chuadatten.user.jwt.JwtUtils;
 import com.chuadatten.user.kafka.EventProducer;
+import com.chuadatten.user.kafka.KafkaTopic;
 import com.chuadatten.user.otp.OtpModel;
 import com.chuadatten.user.otp.OtpType;
-import com.chuadatten.user.outbox.RegisterOutBox;
-import com.chuadatten.user.outbox.repo.RegisterOutBoxRepository;
+import com.chuadatten.user.outbox.OutboxEvent;
+import com.chuadatten.user.outbox.OutboxRepository;
 import com.chuadatten.user.redis.services.OtpModelCacheService;
 import com.chuadatten.user.redis.services.WhiteListCacheService;
 import com.chuadatten.user.repository.DeviceManagerRepository;
@@ -68,11 +71,12 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtils jwtUtils;
     private final WhiteListCacheService whiteListCacheService;
     private final OtpModelCacheService otpModelCacheService;
-    private final EventProducer eventProducer;
     private final PasswordHistoryRepository passwordHistoryRepository;
     private final DeviceManagerRepository deviceManagerRepository;
-    private final RegisterOutBoxRepository registerOutBoxRepository;
     private final UserInfRepository userInfRepository;
+    private final JsonParserUtil jsonParserUtil;
+    private final OutboxRepository outboxRepository;
+    private final EventProducer eventProducer;
 
     @Override
     @Transactional
@@ -118,6 +122,13 @@ public class AuthServiceImpl implements AuthService {
         this.userInfRepository.save(userInf);
         this.generateRegistrationEventOutBox(user);
 
+        PasswordHistory newPasswordHistory = new PasswordHistory();
+        newPasswordHistory.setUser(user);
+        newPasswordHistory
+                .setPasswordHash(this.passwordEncoder.passwordEncoder().encode(registerRequest.getPassword()));
+        newPasswordHistory.setCurrentIndex(0);
+        this.passwordHistoryRepository.save(newPasswordHistory);
+
         return ApiResponse.<String>builder()
                 .message("Registration successful, please check your email to activate your account")
                 .data("Registration")
@@ -133,17 +144,23 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void generateRegistrationEventOutBox(UserAuth user) {
+        RegistrationEvent registrationEvent = RegistrationEvent.builder()
+                .email(user.getEmail())
+                .userId(user.getId().toString())
+                .build();
         String var10000 = ConstString.DOMAIN_NAME.getValue();
 
         String url = var10000 + "activate?token=" + this.jwtUtils.generateActivationToken(user);
-        RegisterOutBox registerOutBox = RegisterOutBox.builder()
-                .email(user.getEmail())
-                .userId(user.getId())
-                .urlActivation(url)
-                .createdAt(LocalDateTime.now())
-                .status(Status.PENDING)
+        registrationEvent.setUrlActive(url);
+        OutboxEvent outboxEvent = OutboxEvent.builder()
+                .aggregateId(user.getId().toString())
+                .aggregateType("User")
+                .eventType(KafkaTopic.REGISTER.name())
+                .headers(registrationEvent.getClass().getPackageName())
+                .payload(jsonParserUtil.toJson(registrationEvent))
                 .build();
-        registerOutBoxRepository.save(registerOutBox);
+
+        outboxRepository.save(outboxEvent);
     }
 
     @Override
@@ -478,6 +495,18 @@ public class AuthServiceImpl implements AuthService {
         if (!newPassword.equals(confirmPassword)) {
             throw new CustomException(ErrorCode.PASSWORDS_DO_NOT_MATCH);
         }
+        List<PasswordHistory> passwordHistories = this.passwordHistoryRepository.getTop3(userId);
+        if (passwordHistories.stream()
+                .anyMatch(ph -> this.passwordEncoder.passwordEncoder().matches(newPassword, ph.getPasswordHash()))) {
+            throw new CustomException(ErrorCode.PASSWORD_RECENTLY_USED);
+        }
+
+        int lastIndex = passwordHistories.isEmpty() ? 0 : passwordHistories.getFirst().getCurrentIndex();
+        PasswordHistory newPasswordHistory = new PasswordHistory();
+        newPasswordHistory.setUser(user);
+        newPasswordHistory.setPasswordHash(this.passwordEncoder.passwordEncoder().encode(newPassword));
+        newPasswordHistory.setCurrentIndex(lastIndex + 1);
+        this.passwordHistoryRepository.save(newPasswordHistory);
         user.setPasswordHash(this.passwordEncoder.passwordEncoder().encode(newPassword));
         this.userRepository.save(user);
         return ApiResponse.<String>builder()

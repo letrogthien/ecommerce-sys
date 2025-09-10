@@ -20,10 +20,6 @@ public class EventProducer {
         s.sendEvent(KafkaTopic.FORGOT_PASSWORD.getTopicName(), event);
     }
 
-    public void changePassword(Object event) {
-        s.sendEvent(KafkaTopic.CHANGE_PASSWORD.getTopicName(), event);
-    }
-
     public void sendOtp(Object event) {
         s.sendEvent(KafkaTopic.SEND_OTP.getTopicName(), event);
     }

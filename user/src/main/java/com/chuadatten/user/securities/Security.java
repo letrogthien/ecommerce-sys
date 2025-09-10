@@ -4,6 +4,7 @@ package com.chuadatten.user.securities;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -47,28 +48,30 @@ public class Security {
                     "/api/v1/user-service/users/me/**",
                     "/api/v1/user-service/kyc/**",
                     "/api/v1/user-service/files/**",
-                    "/api/v1/user-service/v1/auth/logout",
-                    "/api/v1/user-service/v1/auth/logout-all",
-                    "/api/v1/user-service/v1/auth/enable-2fa",
-                    "/api/v1/user-service/v1/auth/disable-2fa",
-                    "/api/v1/user-service/v1/auth/change-password"
+                    "/api/v1/user-service/auth/logout",
+                    "/api/v1/user-service/auth/logout-all",
+                    "/api/v1/user-service/auth/enable-2fa",
+                    "/api/v1/user-service/auth/disable-2fa",
+                    "/api/v1/user-service/auth/change-password"
                 ).hasAnyAuthority(RoleName.ROLE_USER.name(), RoleName.ROLE_SELLER.name(), RoleName.ROLE_ADMIN.name())
 
                 .requestMatchers(
-                    "/api/v1/user-service/v1/auth/login",
-                    "/api/v1/user-service/v1/auth/register",
-                    "/api/v1/user-service/v1/auth/verify-2fa",
-                    "/api/v1/user-service/v1/auth/trust-device",
-                    "/api/v1/user-service/v1/auth/reset-password",
-                    "/api/v1/user-service/v1/auth/forgot-password",
-                    "/api/v1/user-service/v1/auth/activate-account",
-                    "/api/v1/user-service/v1/auth/access-token",
-                    "/api/v1/user-service/v1/search/user/name",
+                    "/api/v1/user-service/auth/login",
+                    "/api/v1/user-service/auth/register",
+                    "/api/v1/user-service/auth/verify-2fa",
+                    "/api/v1/user-service/auth/trust-device",
+                    "/api/v1/user-service/auth/reset-password",
+                    "/api/v1/user-service/auth/forgot-password",
+                    "/api/v1/user-service/auth/activate-account",
+                    "/api/v1/user-service/auth/access-token",
+                    "/api/v1/user-service/search/user/name",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
-                    "/api/v1/user-service/v1/oauth2/jwks",
-                    "/api/v1/user-service/v1/auth/test"
+                    "/api/v1/user-service/oauth2/jwks",
+                    "/api/v1/user-service/auth/test"
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET,"/api/v1/user-service/users/**")
+                .permitAll()
 
                 .anyRequest().authenticated()
         );

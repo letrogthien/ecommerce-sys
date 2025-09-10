@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -33,13 +34,13 @@ public class WalletTransaction {
     private String type;
 
     @Column(name = "amount", nullable = false)
-    private Long amount;
+    private BigInteger amount;
 
     @Column(name = "direction", nullable = false)
     private Integer direction;
 
     @Column(name = "balance_after", nullable = false)
-    private Long balanceAfter;
+    private BigInteger balanceAfter;
 
     @Column(name = "currency", nullable = false, columnDefinition = "CHAR(3)")
     private String currency;

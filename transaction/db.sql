@@ -17,7 +17,6 @@ CREATE TABLE orders (
 
   status          VARCHAR(50)     NOT NULL DEFAULT 'PENDING',
   payment_status  VARCHAR(50)     NOT NULL DEFAULT 'PENDING',
-
   audit_flag      TINYINT(1)      NOT NULL DEFAULT 0,
 
   created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,

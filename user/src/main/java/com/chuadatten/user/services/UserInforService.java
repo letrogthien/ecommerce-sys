@@ -75,4 +75,13 @@ public interface UserInforService {
      * @return: ApiResponse<BillingAddressDto>
      */
     ApiResponse<BillingAddressDto> getBillingAddress(UUID userId);
+
+
+
+    /**
+     * Get User by userName
+     * @param userName
+     * @return: ApiResponse<UserInfDto>
+     */
+    ApiResponse<UserInfDto> getUserByUserName(String userName);
 }

@@ -120,4 +120,11 @@ public class UserInforServiceImpl implements UserInforService {
                 .build();
     }
 
+    @Override
+    public ApiResponse<UserInfDto> getUserByUserName(String displayName) {
+        return ApiResponse.<UserInfDto>builder()
+        .data(userInforMapper.toDto(userInfRepository.findByDisplayName(displayName).orElse(null)))
+        .build();
+    }
+
 }

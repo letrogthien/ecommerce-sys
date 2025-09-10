@@ -270,3 +270,19 @@ CREATE TABLE seller_applications
     INDEX              idx_user_id (user_id),
     INDEX              idx_application_status (application_status)
 );
+
+CREATE TABLE transactional_outbox (
+    id            BINARY(16) NOT NULL,          -- UUID của sự kiện
+    aggregate_type VARCHAR(50) NOT NULL,        -- Tên aggregate: 'Order', 'Wallet', 'Payment'
+    aggregate_id   BINARY(16) NULL,             -- Id của aggregate liên quan (order_id, wallet_id)
+    event_type     VARCHAR(100) NOT NULL,       -- Tên event: 'order.created', 'wallet.reservation_created'
+    payload        JSON NOT NULL,               -- Payload event (dạng JSON)
+    status         VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- PENDING, PUBLISHED, FAILED
+    attempts       INT NOT NULL DEFAULT 0,      -- Số lần thử gửi đi
+    created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    published_at   TIMESTAMP NULL,
+    
+    PRIMARY KEY (id),
+    KEY idx_status_created (status, created_at),
+    KEY idx_aggregate (aggregate_type, aggregate_id)
+);
