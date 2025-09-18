@@ -12,4 +12,6 @@ import com.chuadatten.user.entity.UserVerification;
 @Repository
 public interface UserVerificationRepository extends JpaRepository<UserVerification, UUID> {
     Optional<UserVerification> findTopByUserIdOrderByVersionDesc(UUID userId);
+
+    Optional<UserVerification> findByUserId(UUID id);
 }

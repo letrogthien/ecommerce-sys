@@ -1,5 +1,6 @@
 package com.chuadatten.transaction.service.impl;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -52,8 +53,10 @@ public class OrderServiceImpl implements OrderService {
                                 .status(Status.PENDING)
                                 .currency(orderCreateRq.getCurrency())
                                 .buyerId(buyer)
+                                .items(new ArrayList<>())
                                 .build();
                 orderRepository.save(order);
+                
 
                 orderCreateRq.getItems().forEach(item -> {
                         OrderItem orderItem = OrderItem.builder()
@@ -64,6 +67,7 @@ public class OrderServiceImpl implements OrderService {
                                         .productVariantId(item.getProductVariantId())
                                         .build();
                         orderItem.setOrder(order);
+                        order.getItems().add(orderItem);
                         orderItemRepository.save(orderItem);
                 });
 
@@ -89,7 +93,15 @@ public class OrderServiceImpl implements OrderService {
                                 .status("PENDING")
                                 .payload(jsonParserUtil.toJson(orderCreatedEvent))
                                 .build();
+                
+                System.out.println("Creating outbox event: " + outboxEvent);
+                System.out.println("Event payload: " + outboxEvent.getPayload());
+                
                 outboxRepository.save(outboxEvent);
+                
+                System.out.println("Outbox event saved with ID: " + outboxEvent.getId());
+
+                orderRepository.save(order);
 
                 return ApiResponse.<OrderDto>builder()
                                 .data(transactionMapper.toOrderDto(order))
@@ -134,7 +146,8 @@ public class OrderServiceImpl implements OrderService {
         public ApiResponse<OrderDto> cancelOrder(UUID orderId, UUID buyerId) {
                 Order order = orderRepository.findById(orderId)
                                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
-                if (!order.getStatus().equals(Status.PENDING)) {
+                if (order.getStatus().equals(Status.PAID) || order.getStatus().equals(Status.COMPLETED)
+                                || order.getStatus().equals(Status.PAYING)) {
                         throw new CustomException(ErrorCode.ORDER_CANNOT_CANCEL);
                 }
                 order.setStatus(Status.CANCELLED);

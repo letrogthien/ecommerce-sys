@@ -21,6 +21,7 @@ import com.chuadatten.transaction.request.OrderProofCreateRq;
 import com.chuadatten.transaction.responses.ApiResponse;
 import com.chuadatten.transaction.service.OrderService;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -35,7 +36,7 @@ public class OrderController {
      */
     @PostMapping
     public ApiResponse<OrderDto> createOrder(
-            @JwtClaims("id") UUID buyerId,
+            @Parameter(hidden = true) @JwtClaims("id") UUID buyerId,
             @RequestBody OrderCreateRq orderCreateRq) {
         return orderService.createOrder(orderCreateRq, buyerId);
     }
@@ -46,7 +47,7 @@ public class OrderController {
      */
     @GetMapping("/{orderId}")
     public ApiResponse<OrderDto> getOrderById(
-            @JwtClaims("id") UUID userId,
+            @Parameter(hidden = true)@JwtClaims("id") UUID userId,
             @PathVariable UUID orderId) {
         return orderService.getOrderById(orderId, userId);
     }
@@ -57,7 +58,7 @@ public class OrderController {
      */
     @GetMapping("/buyer")
     public ApiResponse<Page<OrderDto>> getOrdersByBuyer(
-            @JwtClaims("id") UUID buyerId,
+            @Parameter(hidden = true) @JwtClaims("id") UUID buyerId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit) {
@@ -70,7 +71,7 @@ public class OrderController {
      */
     @GetMapping("/seller")
     public ApiResponse<Page<OrderDto>> getOrdersBySeller(
-            @JwtClaims("id") UUID sellerId,
+            @Parameter(hidden = true) @JwtClaims("id") UUID sellerId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit) {
@@ -83,7 +84,7 @@ public class OrderController {
      */
     @PutMapping("/{orderId}/cancel")
     public ApiResponse<OrderDto> cancelOrder(
-            @JwtClaims("id") UUID buyerId,
+            @Parameter(hidden = true) @JwtClaims("id") UUID buyerId,
             @PathVariable UUID orderId) {
         return orderService.cancelOrder(orderId, buyerId);
     }
@@ -94,7 +95,7 @@ public class OrderController {
      */
     @PostMapping(value = "/{orderId}/proof", consumes = {"multipart/form-data"})
     public ApiResponse<OrderDto> uploadDeliveryProof(
-            @JwtClaims("id") UUID sellerId,
+            @Parameter(hidden = true) @JwtClaims("id") UUID sellerId,
             @PathVariable UUID orderId,
             @RequestPart("proofData") OrderProofCreateRq proofCreateRq,
             @RequestPart("file") MultipartFile file) {

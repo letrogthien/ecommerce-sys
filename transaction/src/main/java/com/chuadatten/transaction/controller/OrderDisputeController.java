@@ -21,6 +21,7 @@ import com.chuadatten.transaction.request.OrderDisputeUpdateRq;
 import com.chuadatten.transaction.responses.ApiResponse;
 import com.chuadatten.transaction.service.OrderDisputeService;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -35,7 +36,7 @@ public class OrderDisputeController {
      */
     @PostMapping
     public ApiResponse<OrderDisputeDto> openDispute(
-            @JwtClaims("id") UUID userId,
+            @Parameter(hidden = true) @JwtClaims("id") UUID userId,
             @RequestBody OrderDisputeCreateRq disputeCreateRq) {
         return orderDisputeService.openDispute(disputeCreateRq, userId);
     }
@@ -46,7 +47,7 @@ public class OrderDisputeController {
      */
     @GetMapping("/order/{orderId}")
     public ApiResponse<OrderDisputeDto> getDispute(
-            @JwtClaims("id") UUID userId,
+            @Parameter(hidden = true) @JwtClaims("id") UUID userId,
             @PathVariable UUID orderId) {
         return orderDisputeService.getDispute(orderId, userId);
     }
@@ -57,7 +58,7 @@ public class OrderDisputeController {
      */
     @PutMapping("/{disputeId}")
     public ApiResponse<OrderDisputeDto> updateDispute(
-            @JwtClaims("id") UUID userId,
+            @Parameter(hidden = true) @JwtClaims("id") UUID userId,
             @PathVariable UUID disputeId,
             @RequestBody OrderDisputeUpdateRq disputeUpdateRq) {
         return orderDisputeService.updateDispute(disputeId, disputeUpdateRq, userId);

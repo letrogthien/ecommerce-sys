@@ -1,13 +1,17 @@
 package com.chuadatten.product.outbox;
 
-import lombok.*;
+import java.time.Instant;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Document(collection = "outbox_event")
 @Getter
@@ -49,4 +53,7 @@ public class OutboxEvent {
     @Field("published_at")
     @Indexed
     private Instant publishedAt;
+
+    @Field("locked_at")
+    private Instant lockedAt;
 }

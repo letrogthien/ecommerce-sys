@@ -1,0 +1,357 @@
+[{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c87"
+  },
+  "productId": "68c96216afb33b0ee92b5c7b",
+  "sku": "LQM-VIP15-001",
+  "attributes": {
+    "server": "Việt Nam",
+    "condition": "Like New",
+    "warranty": "1 month"
+  },
+  "attributesHash": "condition:like new|server:việt nam|warranty:1 month",
+  "price": 2500000,
+  "availableQty": 1,
+  "reservedQty": 0,
+  "soldQty": 0,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-15T08:00:00Z",
+  "updatedAt": "2024-02-01T10:30:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c88"
+  },
+  "productId": "68c96216afb33b0ee92b5c7c",
+  "sku": "PUBG-CON-001",
+  "attributes": {
+    "server": "Asia",
+    "condition": "Excellent",
+    "warranty": "2 weeks"
+  },
+  "attributesHash": "condition:excellent|server:asia|warranty:2 weeks",
+  "price": 3200000,
+  "availableQty": 1,
+  "reservedQty": 0,
+  "soldQty": 0,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-20T09:15:00Z",
+  "updatedAt": "2024-02-01T14:45:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c89"
+  },
+  "productId": "68c96216afb33b0ee92b5c7d",
+  "sku": "STEAM-GC-500K-001",
+  "attributes": {
+    "region": "Vietnam",
+    "format": "Digital Code",
+    "delivery": "Instant"
+  },
+  "attributesHash": "delivery:instant|format:digital code|region:vietnam",
+  "price": 515000,
+  "availableQty": 50,
+  "reservedQty": 3,
+  "soldQty": 12,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-20T09:15:00Z",
+  "updatedAt": "2024-02-01T14:45:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c8a"
+  },
+  "productId": "68c96216afb33b0ee92b5c7d",
+  "sku": "STEAM-GC-200K-001",
+  "attributes": {
+    "region": "Vietnam",
+    "format": "Digital Code",
+    "delivery": "Instant",
+    "value": "200000"
+  },
+  "attributesHash": "delivery:instant|format:digital code|region:vietnam|value:200000",
+  "price": 210000,
+  "availableQty": 75,
+  "reservedQty": 5,
+  "soldQty": 25,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-20T09:15:00Z",
+  "updatedAt": "2024-02-01T14:45:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c8b"
+  },
+  "productId": "68c96216afb33b0ee92b5c7e",
+  "sku": "OFFICE-2021-PRO-001",
+  "attributes": {
+    "version": "2021 Professional Plus",
+    "devices": "1 PC",
+    "language": "Multi-language",
+    "support": "Installation included"
+  },
+  "attributesHash": "devices:1 pc|language:multi-language|support:installation included|version:2021 professional plus",
+  "price": 450000,
+  "availableQty": 25,
+  "reservedQty": 2,
+  "soldQty": 8,
+  "status": "ACTIVE",
+  "createdAt": "2024-02-01T10:00:00Z",
+  "updatedAt": "2024-02-05T16:20:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c8c"
+  },
+  "productId": "68c96216afb33b0ee92b5c7e",
+  "sku": "OFFICE-2021-PRO-5PC",
+  "attributes": {
+    "version": "2021 Professional Plus",
+    "devices": "5 PC",
+    "language": "Multi-language",
+    "support": "Installation included"
+  },
+  "attributesHash": "devices:5 pc|language:multi-language|support:installation included|version:2021 professional plus",
+  "price": 1200000,
+  "availableQty": 10,
+  "reservedQty": 1,
+  "soldQty": 3,
+  "status": "ACTIVE",
+  "createdAt": "2024-02-01T10:00:00Z",
+  "updatedAt": "2024-02-05T16:20:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c8d"
+  },
+  "productId": "68c96216afb33b0ee92b5c7f",
+  "sku": "NETFLIX-FAM-12M-001",
+  "attributes": {
+    "plan": "Premium Family",
+    "duration": "12 months",
+    "quality": "4K Ultra HD",
+    "profiles": "4 users"
+  },
+  "attributesHash": "duration:12 months|plan:premium family|profiles:4 users|quality:4k ultra hd",
+  "price": 1200000,
+  "availableQty": 15,
+  "reservedQty": 2,
+  "soldQty": 5,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-10T11:30:00Z",
+  "updatedAt": "2024-01-15T09:45:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c8e"
+  },
+  "productId": "68c96216afb33b0ee92b5c7f",
+  "sku": "NETFLIX-FAM-6M-001",
+  "attributes": {
+    "plan": "Premium Family",
+    "duration": "6 months",
+    "quality": "4K Ultra HD",
+    "profiles": "4 users"
+  },
+  "attributesHash": "duration:6 months|plan:premium family|profiles:4 users|quality:4k ultra hd",
+  "price": 650000,
+  "availableQty": 20,
+  "reservedQty": 1,
+  "soldQty": 8,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-10T11:30:00Z",
+  "updatedAt": "2024-01-15T09:45:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c8f"
+  },
+  "productId": "68c96216afb33b0ee92b5c80",
+  "sku": "CYBERPUNK-2077-STM-001",
+  "attributes": {
+    "platform": "Steam",
+    "region": "Global",
+    "dlc": "Phantom Liberty included",
+    "language": "Multi-language"
+  },
+  "attributesHash": "dlc:phantom liberty included|language:multi-language|platform:steam|region:global",
+  "price": 890000,
+  "availableQty": 12,
+  "reservedQty": 1,
+  "soldQty": 4,
+  "status": "ACTIVE",
+  "createdAt": "2024-02-05T14:20:00Z",
+  "updatedAt": "2024-02-10T09:30:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c90"
+  },
+  "productId": "68c96216afb33b0ee92b5c80",
+  "sku": "CYBERPUNK-2077-STM-002",
+  "attributes": {
+    "platform": "Steam",
+    "region": "Global",
+    "dlc": "Base game only",
+    "language": "Multi-language"
+  },
+  "attributesHash": "dlc:base game only|language:multi-language|platform:steam|region:global",
+  "price": 650000,
+  "availableQty": 20,
+  "reservedQty": 0,
+  "soldQty": 7,
+  "status": "ACTIVE",
+  "createdAt": "2024-02-05T14:20:00Z",
+  "updatedAt": "2024-02-10T09:30:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c91"
+  },
+  "productId": "68c96216afb33b0ee92b5c81",
+  "sku": "WOW-LVL80-ALL-001",
+  "attributes": {
+    "level": "80",
+    "server": "Stormrage US",
+    "faction": "Alliance",
+    "class": "Paladin",
+    "expansion": "Dragonflight"
+  },
+  "attributesHash": "class:paladin|expansion:dragonflight|faction:alliance|level:80|server:stormrage us",
+  "price": 5500000,
+  "availableQty": 1,
+  "reservedQty": 0,
+  "soldQty": 0,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-25T16:45:00Z",
+  "updatedAt": "2024-02-02T11:20:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c92"
+  },
+  "productId": "68c96216afb33b0ee92b5c82",
+  "sku": "SPOTIFY-PREM-6M-001",
+  "attributes": {
+    "plan": "Premium",
+    "duration": "6 months",
+    "quality": "320kbps",
+    "offline": "Unlimited downloads"
+  },
+  "attributesHash": "duration:6 months|offline:unlimited downloads|plan:premium|quality:320kbps",
+  "price": 280000,
+  "availableQty": 30,
+  "reservedQty": 3,
+  "soldQty": 15,
+  "status": "ACTIVE",
+  "createdAt": "2024-02-01T13:15:00Z",
+  "updatedAt": "2024-02-08T10:40:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c93"
+  },
+  "productId": "68c96216afb33b0ee92b5c82",
+  "sku": "SPOTIFY-PREM-12M-001",
+  "attributes": {
+    "plan": "Premium",
+    "duration": "12 months",
+    "quality": "320kbps",
+    "offline": "Unlimited downloads"
+  },
+  "attributesHash": "duration:12 months|offline:unlimited downloads|plan:premium|quality:320kbps",
+  "price": 520000,
+  "availableQty": 18,
+  "reservedQty": 2,
+  "soldQty": 7,
+  "status": "ACTIVE",
+  "createdAt": "2024-02-01T13:15:00Z",
+  "updatedAt": "2024-02-08T10:40:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c94"
+  },
+  "productId": "68c96216afb33b0ee92b5c83",
+  "sku": "NORDVPN-3Y-PREM-001",
+  "attributes": {
+    "plan": "Premium",
+    "duration": "3 years",
+    "devices": "6 simultaneous",
+    "servers": "5400+",
+    "features": "P2P, Kill Switch, CyberSec"
+  },
+  "attributesHash": "devices:6 simultaneous|duration:3 years|features:p2p, kill switch, cybersec|plan:premium|servers:5400+",
+  "price": 1800000,
+  "availableQty": 8,
+  "reservedQty": 1,
+  "soldQty": 3,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-28T09:30:00Z",
+  "updatedAt": "2024-02-06T15:25:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c95"
+  },
+  "productId": "68c96216afb33b0ee92b5c83",
+  "sku": "NORDVPN-1Y-PREM-001",
+  "attributes": {
+    "plan": "Premium",
+    "duration": "1 year",
+    "devices": "6 simultaneous",
+    "servers": "5400+",
+    "features": "P2P, Kill Switch, CyberSec"
+  },
+  "attributesHash": "devices:6 simultaneous|duration:1 year|features:p2p, kill switch, cybersec|plan:premium|servers:5400+",
+  "price": 750000,
+  "availableQty": 15,
+  "reservedQty": 2,
+  "soldQty": 6,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-28T09:30:00Z",
+  "updatedAt": "2024-02-06T15:25:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c96"
+  },
+  "productId": "68c96216afb33b0ee92b5c84",
+  "sku": "GPLAY-GC-200K-001",
+  "attributes": {
+    "platform": "Google Play",
+    "value": "200000",
+    "region": "Vietnam",
+    "delivery": "Instant code"
+  },
+  "attributesHash": "delivery:instant code|platform:google play|region:vietnam|value:200000",
+  "price": 205000,
+  "availableQty": 45,
+  "reservedQty": 5,
+  "soldQty": 20,
+  "status": "ACTIVE",
+  "createdAt": "2024-02-03T11:45:00Z",
+  "updatedAt": "2024-02-09T14:30:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96336afb33b0ee92b5c97"
+  },
+  "productId": "68c96216afb33b0ee92b5c84",
+  "sku": "GPLAY-GC-500K-001",
+  "attributes": {
+    "platform": "Google Play",
+    "value": "500000",
+    "region": "Vietnam",
+    "delivery": "Instant code"
+  },
+  "attributesHash": "delivery:instant code|platform:google play|region:vietnam|value:500000",
+  "price": 515000,
+  "availableQty": 25,
+  "reservedQty": 2,
+  "soldQty": 8,
+  "status": "ACTIVE",
+  "createdAt": "2024-02-03T11:45:00Z",
+  "updatedAt": "2024-02-09T14:30:00Z"
+}]

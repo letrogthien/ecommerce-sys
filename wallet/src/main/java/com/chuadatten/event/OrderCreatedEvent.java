@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor  
 public class OrderCreatedEvent {
     private String orderId;
     private String buyerId;

@@ -1,11 +1,11 @@
 package com.chuadatten.product.service;
 
+import java.util.List;
+
 import com.chuadatten.product.dto.ProductVariantDto;
 import com.chuadatten.product.requests.VariantCreateRq;
 import com.chuadatten.product.requests.VariantUpdateRq;
 import com.chuadatten.product.responses.ApiResponse;
-
-import java.util.List;
 
 /**
  * Service interface for managing product variants.
@@ -88,4 +88,8 @@ public interface ProductVariantService {
      * @return an ApiResponse containing the updated product variant DTO
      */
     ApiResponse<ProductVariantDto> release(String variantId, int qty);
+
+
+
+    ApiResponse<List<ProductVariantDto>> getTopSold(int limit);
 }

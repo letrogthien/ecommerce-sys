@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+
 
 @RestController
 @RequestMapping("/api/v1/product-service/categories")
@@ -29,4 +31,10 @@ public class CategoryController {
     public ApiResponse<List<CategoryDto>> getChildren(@PathVariable String parentId) {
         return categoryService.getChildren(parentId);
     }
+
+    @GetMapping("/root")
+    public ApiResponse<List<CategoryDto>> getRoot() {
+        return categoryService.getRoot();
+    }
+    
 }

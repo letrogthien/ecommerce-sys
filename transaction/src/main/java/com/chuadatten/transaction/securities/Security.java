@@ -23,32 +23,43 @@ public class Security {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
+        http.cors(cors -> cors
+            .configurationSource(request -> {
+                org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+                config.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
+                config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                config.setAllowedHeaders(java.util.List.of("*"));
+                config.setAllowCredentials(true);
+                return config;
+            })
+        );
 
         http.authorizeHttpRequests(auth -> auth
             // --- Public ---
-            .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-            .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-
-            // --- USER ---
-            .requestMatchers(HttpMethod.POST, "/api/product-variants/*/reserve").hasAuthority(RoleName.ROLE_USER.name())
-            .requestMatchers(HttpMethod.POST, "/api/product-variants/*/release").hasAuthority(RoleName.ROLE_USER.name())
-            .requestMatchers(HttpMethod.POST, "/api/product-variants/*/commit").hasAuthority(RoleName.ROLE_USER.name())
-
-            // --- SELLER ---
-            .requestMatchers(HttpMethod.POST, "/api/products").hasAuthority(RoleName.ROLE_SELLER.name())
-            .requestMatchers(HttpMethod.PUT, "/api/products/*").hasAuthority(RoleName.ROLE_SELLER.name())
-            .requestMatchers(HttpMethod.DELETE, "/api/products/*").hasAuthority(RoleName.ROLE_SELLER.name())
-            .requestMatchers(HttpMethod.POST, "/api/products/*/images").hasAuthority(RoleName.ROLE_SELLER.name())
-
-            .requestMatchers(HttpMethod.POST, "/api/product-variants").hasAuthority(RoleName.ROLE_SELLER.name())
-            .requestMatchers(HttpMethod.PUT, "/api/product-variants/*").hasAuthority(RoleName.ROLE_SELLER.name())
-            .requestMatchers(HttpMethod.DELETE, "/api/product-variants/*").hasAuthority(RoleName.ROLE_SELLER.name())
+            
 
             // --- ADMIN ---
-            .requestMatchers("/api/admin/**").hasAuthority(RoleName.ROLE_ADMIN.name())
+            .requestMatchers("/api/v1/transaction-service/admin/**").hasAuthority(RoleName.ROLE_ADMIN.name())
+
+            // --- USER (Buyer) ---
+            .requestMatchers(HttpMethod.POST, "/api/v1/transaction-service/orders").hasAuthority(RoleName.ROLE_USER.name())
+            .requestMatchers(HttpMethod.GET, "/api/v1/transaction-service/orders/buyer").hasAuthority(RoleName.ROLE_USER.name())
+            .requestMatchers(HttpMethod.PUT, "/api/v1/transaction-service/orders/*/cancel").hasAuthority(RoleName.ROLE_USER.name())
+            .requestMatchers(HttpMethod.POST, "/api/v1/transaction-service/refunds").hasAuthority(RoleName.ROLE_USER.name())
+            .requestMatchers(HttpMethod.GET, "/api/v1/transaction-service/refunds/order/*").hasAuthority(RoleName.ROLE_USER.name())
+
+            // --- SELLER ---
+            .requestMatchers(HttpMethod.GET, "/api/v1/transaction-service/orders/seller").hasAuthority(RoleName.ROLE_SELLER.name())
+            .requestMatchers(HttpMethod.POST, "/api/v1/transaction-service/orders/*/proof").hasAuthority(RoleName.ROLE_SELLER.name())
+
+            // --- USER OR SELLER ---
+            .requestMatchers(HttpMethod.GET, "/api/v1/transaction-service/orders/*").hasAnyAuthority(RoleName.ROLE_USER.name(), RoleName.ROLE_SELLER.name())
+            .requestMatchers(HttpMethod.POST, "/api/v1/transaction-service/disputes").hasAnyAuthority(RoleName.ROLE_USER.name(), RoleName.ROLE_SELLER.name())
+            .requestMatchers(HttpMethod.GET, "/api/v1/transaction-service/disputes/order/*").hasAnyAuthority(RoleName.ROLE_USER.name(), RoleName.ROLE_SELLER.name())
+            .requestMatchers(HttpMethod.PUT, "/api/v1/transaction-service/disputes/*").hasAnyAuthority(RoleName.ROLE_USER.name(), RoleName.ROLE_SELLER.name())
 
             // --- Default ---
-            .anyRequest().permitAll()
+            .anyRequest().authenticated()
         );
 
         http.sessionManagement(session ->

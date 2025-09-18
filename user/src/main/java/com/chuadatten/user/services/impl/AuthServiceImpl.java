@@ -19,8 +19,10 @@ import com.chuadatten.user.common.JsonParserUtil;
 import com.chuadatten.user.common.RoleName;
 import com.chuadatten.user.common.Status;
 import com.chuadatten.user.common.TokenType;
+import com.chuadatten.user.dto.UserAuthReturnDto;
 import com.chuadatten.user.entity.DeviceManager;
 import com.chuadatten.user.entity.PasswordHistory;
+import com.chuadatten.user.entity.Preference;
 import com.chuadatten.user.entity.Role;
 import com.chuadatten.user.entity.UserAuth;
 import com.chuadatten.user.entity.UserInf;
@@ -39,16 +41,15 @@ import com.chuadatten.user.redis.services.OtpModelCacheService;
 import com.chuadatten.user.redis.services.WhiteListCacheService;
 import com.chuadatten.user.repository.DeviceManagerRepository;
 import com.chuadatten.user.repository.PasswordHistoryRepository;
+import com.chuadatten.user.repository.PreferenceRepository;
 import com.chuadatten.user.repository.RoleRepository;
 import com.chuadatten.user.repository.UserAuthRepository;
 import com.chuadatten.user.repository.UserInfRepository;
 import com.chuadatten.user.repository.UserRoleRepository;
-import com.chuadatten.user.requests.AccessTokenRequest;
 import com.chuadatten.user.requests.ChangePwdRequest;
 import com.chuadatten.user.requests.Disable2FaRequest;
 import com.chuadatten.user.requests.ForgotPwdRequest;
 import com.chuadatten.user.requests.LoginRequest;
-import com.chuadatten.user.requests.LogoutRequest;
 import com.chuadatten.user.requests.RegisterRequest;
 import com.chuadatten.user.requests.ResetPwdRequest;
 import com.chuadatten.user.requests.Verify2FaRequest;
@@ -76,6 +77,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserInfRepository userInfRepository;
     private final JsonParserUtil jsonParserUtil;
     private final OutboxRepository outboxRepository;
+    private final PreferenceRepository preferenceRepository;
     private final EventProducer eventProducer;
 
     @Override
@@ -119,7 +121,7 @@ public class AuthServiceImpl implements AuthService {
                 .displayName(user.getUsername())
                 .build();
 
-        this.userInfRepository.save(userInf);
+        UserInf savedUserInf = this.userInfRepository.save(userInf);
         this.generateRegistrationEventOutBox(user);
 
         PasswordHistory newPasswordHistory = new PasswordHistory();
@@ -129,6 +131,16 @@ public class AuthServiceImpl implements AuthService {
         newPasswordHistory.setCurrentIndex(0);
         this.passwordHistoryRepository.save(newPasswordHistory);
 
+
+        Preference preference = Preference.builder()
+                .user(savedUserInf)
+                .notificationEmail(false)
+                .notificationPush(false)
+                .preferredPlatform("Web")
+                .preferredCurrency("VND")
+                .build();
+
+        this.preferenceRepository.save(preference);
         return ApiResponse.<String>builder()
                 .message("Registration successful, please check your email to activate your account")
                 .data("Registration")
@@ -148,9 +160,9 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .userId(user.getId().toString())
                 .build();
-        String var10000 = ConstString.DOMAIN_NAME.getValue();
+        String var10000 = ConstString.FE_DOMAIN.getValue();
 
-        String url = var10000 + "activate?token=" + this.jwtUtils.generateActivationToken(user);
+        String url = var10000 + "?token=" + this.jwtUtils.generateActivationToken(user);
         registrationEvent.setUrlActive(url);
         OutboxEvent outboxEvent = OutboxEvent.builder()
                 .aggregateId(user.getId().toString())
@@ -282,8 +294,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ApiResponse<String> logout(LogoutRequest logoutRequest) {
-        String jtiRefreshToken = logoutRequest.getRefreshToken();
+    public ApiResponse<String> logout(String token) {
+        String jtiRefreshToken = token;
         UUID userId = this.jwtUtils.extractClaim(jtiRefreshToken, "id") != null
                 ? UUID.fromString(this.jwtUtils.extractClaim(jtiRefreshToken, "id"))
                 : null;
@@ -305,24 +317,37 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ApiResponse<LoginResponse> accessToken(AccessTokenRequest accessTokenRequest) {
-        String refreshToken = accessTokenRequest.getRefreshToken();
+    public ApiResponse<String> accessToken(String accessTokenRequest, HttpServletResponse response) {
+        String refreshToken = accessTokenRequest;
         if (!this.jwtUtils.isTokenValid(refreshToken, TokenType.REFRESH_TOKEN)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
         UUID userId = UUID.fromString(this.jwtUtils.extractClaim(refreshToken, "id"));
-        if (!this.whiteListCacheService.isPresentInCache(refreshToken, userId)) {
+        String jti = this.jwtUtils.extractClaim(refreshToken, "jti");
+        System.out.println("User ID: " + userId);
+        if (!this.whiteListCacheService.isPresentInCache(jti, userId)) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
         UserAuth user = this.userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         String token = this.jwtUtils.generateToken(user);
-        return ApiResponse.<LoginResponse>builder()
+
+        Cookie cookie = new Cookie("access_token", token);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(3600000);
+        response.addCookie(cookie);
+
+        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(false);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(604800000);
+        response.addCookie(refreshTokenCookie);
+        return ApiResponse.<String>builder()
                 .message("Access token generated successfully")
-                .data(LoginResponse.builder()
-                        .accessToken(token)
-                        .refreshToken(refreshToken)
-                        .build())
+                .data("token in cookie")
                 .build();
 
     }
@@ -410,6 +435,8 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    
+
     @Override
     @CusAuditable(action = "Disable 2FA", description = "UserAuth disables two-factor authentication")
     public ApiResponse<String> disableTwoFAuth(Disable2FaRequest disable2FAuthRequest, UUID userId) {
@@ -417,7 +444,7 @@ public class AuthServiceImpl implements AuthService {
         boolean isValid = otpModelCacheService.isPresentAndValidInCache(
                 userId,
                 disable2FAuthRequest.getOtp(),
-                OtpType.TWO_FACTOR_AUTHENTICATION);
+                OtpType.DISABLE_2FA);
         if (!isValid) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
@@ -549,6 +576,70 @@ public class AuthServiceImpl implements AuthService {
         return ApiResponse.<String>builder()
                 .message("Role " + roleName + " assigned to user successfully")
                 .data("Role " + roleName + " assigned to user successfully")
+                .build();
+    }
+
+    @Override
+    public ApiResponse<UserAuthReturnDto> getMe(UUID userId) {
+        UserAuth user = this.userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        UserAuthReturnDto userAuthReturnDto = UserAuthReturnDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .status(user.getStatus())
+                .twoFactorEnabled(user.getTwoFactorEnabled())
+                .isKyc(user.getIsKyc())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .lastLoginAt(user.getLastLoginAt())
+                .build();
+        return ApiResponse.<UserAuthReturnDto>builder()
+                .message("Get user info successfully")
+                .data(userAuthReturnDto)
+                .build();
+    }
+
+    @Override
+    public void clearCookies(HttpServletResponse response) {
+        Cookie cookie = new Cookie("access_token", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+
+        Cookie refreshTokenCookie = new Cookie("refresh_token", null);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(false);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(0);
+        response.addCookie(refreshTokenCookie);
+    }
+
+    @Override
+    public ApiResponse<String> disAble2FaRequest(UUID userId) {
+        UserAuth user = this.userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        if (!Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
+            return ApiResponse.<String>builder()
+                    .message("Two-factor authentication is not enabled")
+                    .build();
+        }
+        OtpModel otpModel = OtpModel.builder()
+                .userId(userId)
+                .otpType(OtpType.DISABLE_2FA)
+                .build();
+
+        otpModel.generateOtp();
+        this.otpModelCacheService.saveOtpModel(otpModel);
+        OtpEvent otpEvent = OtpEvent.builder().email(user.getEmail()).otp(otpModel.getOtp()).build();
+        this.eventProducer.sendOtp(otpEvent);
+
+
+        return ApiResponse.<String>builder()
+                .message("OTP sent to your email")
+                .data("OTP sent to your email")
                 .build();
     }
 }

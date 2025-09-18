@@ -26,6 +26,16 @@ public class Security {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity security) throws Exception {
         security.csrf(AbstractHttpConfigurer::disable);
+        security.cors(cors -> cors
+            .configurationSource(request -> {
+                org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+                config.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
+                config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                config.setAllowedHeaders(java.util.List.of("*"));
+                config.setAllowCredentials(true);
+                return config;
+            })
+        );
         configureAuthorizationRules(security);
         configureSessionManagement(security);
         configureOAuth2ResourceServer(security);
@@ -65,11 +75,12 @@ public class Security {
                     "/api/v1/user-service/auth/activate-account",
                     "/api/v1/user-service/auth/access-token",
                     "/api/v1/user-service/search/user/name",
+                    "/api/v1/user-service/auth/clear-cookie",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
-                    "/api/v1/user-service/oauth2/jwks",
                     "/api/v1/user-service/auth/test"
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/oauth2/jwks").permitAll()
                 .requestMatchers(HttpMethod.GET,"/api/v1/user-service/users/**")
                 .permitAll()
 

@@ -25,6 +25,8 @@ import com.chuadatten.user.services.UserInforService;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/v1/user-service/users")
@@ -70,6 +72,8 @@ public class UserInforController {
         return userInforService.updateAvatar(userId, avatar);
     }
 
+    
+
     /**
      * Get user preference
      */
@@ -107,6 +111,8 @@ public class UserInforController {
     ) {
         return userInforService.createBillingAddress(userId, billingAddressRequest);
     }
+
+    
 
     /**
      * Update billing address

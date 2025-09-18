@@ -3,6 +3,8 @@ package com.chuadatten.user.controller;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,12 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.chuadatten.user.anotation.JwtClaims;
 import com.chuadatten.user.common.RoleName;
-import com.chuadatten.user.requests.AccessTokenRequest;
+import com.chuadatten.user.dto.UserAuthReturnDto;
 import com.chuadatten.user.requests.ChangePwdRequest;
 import com.chuadatten.user.requests.Disable2FaRequest;
 import com.chuadatten.user.requests.ForgotPwdRequest;
 import com.chuadatten.user.requests.LoginRequest;
-import com.chuadatten.user.requests.LogoutRequest;
 import com.chuadatten.user.requests.RegisterRequest;
 import com.chuadatten.user.requests.ResetPwdRequest;
 import com.chuadatten.user.requests.Verify2FaRequest;
@@ -37,6 +38,22 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
     private final AuthService authService;
 
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserAuthReturnDto>> getMe(@Parameter(hidden = true) @JwtClaims("id") UUID userId) {
+        return ResponseEntity.ok(authService.getMe(userId));
+    }
+
+    @PostMapping("/clear-cookie")
+    public ApiResponse<String> clearCookies(HttpServletResponse response) {
+        authService.clearCookies(response);
+
+        return ApiResponse.<String>builder()
+                .message("Clear cookies successfully")
+                .data("Clear cookies")
+                .build();
+    }
+    
+
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<String>> register(@RequestBody RegisterRequest registerRequest) {
         return ResponseEntity.ok(authService.register(registerRequest));
@@ -48,18 +65,18 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<String>> logout(@RequestBody LogoutRequest logoutRequest) {
-        return ResponseEntity.ok(authService.logout(logoutRequest));
+    public ResponseEntity<ApiResponse<String>> logout(@CookieValue(name = "refresh_token", required = false) String tokenString) {
+        return ResponseEntity.ok(authService.logout(tokenString));
     }
 
     @PostMapping("/logout-all")
-    public ResponseEntity<ApiResponse<String>> logoutAll(@Parameter(hidden = true) @JwtClaims("id") UUID userId) {
+    public ResponseEntity<ApiResponse<String>> logoutAll( UUID userId) {
         return ResponseEntity.ok(authService.logoutAll(userId));
     }
 
     @PostMapping("/access-token")
-    public ResponseEntity<ApiResponse<LoginResponse>> accessToken(@RequestBody AccessTokenRequest accessTokenRequest) {
-        return ResponseEntity.ok(authService.accessToken(accessTokenRequest));
+    public ResponseEntity<ApiResponse<String>> accessToken(@CookieValue(name = "refresh_token", required = false) String refreshToken, HttpServletResponse response) {
+        return ResponseEntity.ok(authService.accessToken(refreshToken, response));
     }
 
     @PostMapping("/change-password")
@@ -106,6 +123,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> assignRoleToUser(@Parameter(hidden = true) @JwtClaims("id") UUID userId, @RequestParam RoleName roleName) {
         return ResponseEntity.ok(authService.assignRoleToUser(userId, roleName));
     }
+
+
+    @GetMapping("/disable-2fa")
+    public ApiResponse<String> disableTwoFA(@Parameter(hidden = true) @JwtClaims("id") UUID userId) {
+        return authService.disAble2FaRequest(userId);
+    }
+    
 
     
 }

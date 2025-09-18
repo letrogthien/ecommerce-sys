@@ -44,134 +44,137 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class EventListener {
-    private final PaymentRepository paymentRepository;
-    private final IdempotencyStoreRepository idempotencyStoreRepository;
-    private final VnpayUltils vnpayUltils;
-    private final JsonParserUtil jsonParserUtil;
-    private final OutboxRepository outboxRepository;
-    private final PaymentAttemptRepository paymentAttemptRepository;
-    private final WalletRepository walletRepository;
-    private final WalletReservationRepository walletReservationRepository;
-    private final WalletTransactionRepository walletTransactionRepository;
+        private final PaymentRepository paymentRepository;
+        private final IdempotencyStoreRepository idempotencyStoreRepository;
+        private final VnpayUltils vnpayUltils;
+        private final JsonParserUtil jsonParserUtil;
+        private final OutboxRepository outboxRepository;
+        private final PaymentAttemptRepository paymentAttemptRepository;
+        private final WalletRepository walletRepository;
+        private final WalletReservationRepository walletReservationRepository;
+        private final WalletTransactionRepository walletTransactionRepository;
 
-
-    @Transactional
-    @KafkaListener(topics = "transaction.order.confirm.data", groupId = "wallet-group")
-    public void listenOrderConfirmData(OrderComfirmData event) {
-        handleOrderConfirmDataListener(event);
-    }
-
-    private void handleOrderConfirmDataListener(OrderComfirmData event) {
-        if (idempotencyStoreRepository.existsByIdempotencyKey(event.getIdempotencyKey())) {
-            return;
+        @Transactional
+        @KafkaListener(topics = "transaction.order.confirm.data", groupId = "wallet-group")
+        public void listenOrderConfirmData(OrderComfirmData event) {
+                System.out.println("Received OrderComfirmData event: " + event);
+                handleOrderConfirmDataListener(event);
         }
-        BigDecimal amount = event.getTotalAmount();
-        Payment payment = Payment.builder()
-                .orderId(UUID.fromString(event.getOrderId()))
-                .amount(amount.toBigInteger())
-                .status(Status.CREATED)
-                .currency("VND")
-                .idempotencyKey(event.getIdempotencyKey())
-                .userId(UUID.fromString(event.getBuyerId()))
-                .type(PaymentType.ORDER_PAYMENT)
-                .build();
-        paymentRepository.save(payment);
 
-        IdempotencyStore idempotencyStore = IdempotencyStore.builder()
-                .idempotencyKey(event.getIdempotencyKey())
-                .resourceId(payment.getId())
-                .resourceType("PAYMENT")
-                .build();
-        idempotencyStoreRepository.save(idempotencyStore);
-    }
+        private void handleOrderConfirmDataListener(OrderComfirmData event) {
+                if (idempotencyStoreRepository.existsByIdempotencyKey(event.getIdempotencyKey())) {
+                        return;
+                }
+                BigDecimal amount = event.getTotalAmount();
+                Payment payment = Payment.builder()
+                                .orderId(UUID.fromString(event.getOrderId()))
+                                .amount(amount.toBigInteger())
+                                .status(Status.CREATED)
+                                .currency("VND")
+                                .idempotencyKey(event.getIdempotencyKey())
+                                .userId(UUID.fromString(event.getBuyerId()))
+                                .type(PaymentType.ORDER_PAYMENT)
+                                .build();
+                paymentRepository.save(payment);
 
-    @KafkaListener(topics = "order.checking.status", groupId = "wallet-group")
-    public void listenOrderCheckingStatus(OrderCheckingStatusEvent event)
-            throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException {
-        handleOrderCheckingStatusListener(event);
-    }
-
-    private void handleOrderCheckingStatusListener(OrderCheckingStatusEvent event)
-            throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException {
-        Payment pay = paymentRepository.findById(UUID.fromString(event.getPaymentId())).orElse(null);
-        if (pay == null) {
-            throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
+                IdempotencyStore idempotencyStore = IdempotencyStore.builder()
+                                .idempotencyKey(event.getIdempotencyKey())
+                                .resourceId(payment.getId())
+                                .resourceType("PAYMENT")
+                                .build();
+                idempotencyStoreRepository.save(idempotencyStore);
         }
-        if (event.getStatus().equals("OK")) {
 
-            if (event.getPaymentMethod().equals(PaymentMethod.DIRECT.name())) {
-                String url = vnpayUltils.payUrl(event.getIp(), pay.getAmount(), pay.getMetadata(), pay.getTxnRef());
-                pay.setStatus(Status.PROCESSING);
+        @KafkaListener(topics = "order.checking.status", groupId = "wallet-group")
+        public void listenOrderCheckingStatus(OrderCheckingStatusEvent event)
+                        throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException {
+                handleOrderCheckingStatusListener(event);
+        }
+
+        private void handleOrderCheckingStatusListener(OrderCheckingStatusEvent event)
+                        throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException {
+                Payment pay = paymentRepository.findById(UUID.fromString(event.getPaymentId())).orElse(null);
+
+                if (pay == null) {
+                        throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
+                }
+                pay.setMetadata(event.getOrderId());
                 paymentRepository.save(pay);
-                PayUrlEvent payUrlEvent = PayUrlEvent.builder()
-                        .orderId(event.getOrderId())
-                        .paymentId(pay.getId().toString())
-                        .payUrl(url)
-                        .userId(pay.getUserId().toString())
-                        .build();
+                if (event.getStatus().equals("OK")) {
 
-                OutboxEvent outboxEvent = OutboxEvent.builder()
-                        .eventType(KafkaTopic.PAYMENT_URL_SUCCESS.name())
-                        .payload(jsonParserUtil.toJson(payUrlEvent))
-                        .aggregateId(pay.getId().toString())
-                        .aggregateType("PAYMENT")
-                        .status("PENDING")
-                        .build();
-                outboxRepository.save(outboxEvent);
-                return;
-            }
-            WalletReservation walletReservation = walletReservationRepository
-                    .findByOrderId(UUID.fromString(event.getOrderId()))
-                    .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_SUCCEEDED));
-            walletReservation.setStatus(Status.COMPLETED);
-            Wallet wallet = walletRepository.findById(walletReservation.getWalletId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
-            wallet.setReserved(wallet.getReserved().subtract(walletReservation.getAmount()));
+                        if (event.getPaymentMethod().equals(PaymentMethod.DIRECT.name())) {
+                                String url = vnpayUltils.payUrl(event.getIp(), pay.getAmount(), pay.getMetadata(),
+                                                pay.getId().toString());
+                                pay.setStatus(Status.PROCESSING);
+                                paymentRepository.save(pay);
+                                PayUrlEvent payUrlEvent = PayUrlEvent.builder()
+                                                .orderId(event.getOrderId())
+                                                .paymentId(pay.getId().toString())
+                                                .payUrl(url)
+                                                .userId(pay.getUserId().toString())
+                                                .build();
 
-            walletRepository.save(wallet);
-            walletReservationRepository.save(walletReservation);
-            pay.setStatus(Status.SUCCESS);
+                                OutboxEvent outboxEvent = OutboxEvent.builder()
+                                                .eventType(KafkaTopic.PAYMENT_URL_SUCCESS.name())
+                                                .payload(jsonParserUtil.toJson(payUrlEvent))
+                                                .aggregateId(pay.getId().toString())
+                                                .aggregateType("PAYMENT")
+                                                .status("PENDING")
+                                                .build();
+                                outboxRepository.save(outboxEvent);
+                                return;
+                        }
+                        WalletReservation walletReservation = walletReservationRepository
+                                        .findByOrderId(UUID.fromString(event.getOrderId()))
+                                        .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_SUCCEEDED));
+                        walletReservation.setStatus(Status.COMPLETED);
+                        Wallet wallet = walletRepository.findById(walletReservation.getWalletId())
+                                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+                        wallet.setReserved(wallet.getReserved().subtract(walletReservation.getAmount()));
 
-            
-            WalletTransaction walletTransaction = WalletTransaction.builder()
-                    .amount(walletReservation.getAmount())
-                    .currency(walletReservation.getCurrency())
-                    .type(PaymentType.ORDER_PAYMENT.toString())
-                    .walletId(wallet.getId())
-                    .status(Status.SUCCESS)
-                    .build();
-            walletTransactionRepository.save(walletTransaction);
-            
-            PaymentSuccessedEvent paymentSuccessedEvent = PaymentSuccessedEvent.builder()
-                    .orderId(pay.getOrderId().toString())
-                    .paymentId(pay.getId().toString())
-                    .userId(pay.getUserId().toString())
-                    .build();
-            OutboxEvent outboxEvent = OutboxEvent.builder()
-                    .eventType(KafkaTopic.PAYMENT_SUCCESS.name())
-                    .payload(jsonParserUtil.toJson(paymentSuccessedEvent))
-                    .aggregateId(pay.getId().toString())
-                    .aggregateType("PAYMENT")
-                    .status("PENDING")
-                    .build();
+                        walletRepository.save(wallet);
+                        walletReservationRepository.save(walletReservation);
+                        pay.setStatus(Status.SUCCESS);
 
-            outboxRepository.save(outboxEvent);
+                        WalletTransaction walletTransaction = WalletTransaction.builder()
+                                        .amount(walletReservation.getAmount())
+                                        .currency(walletReservation.getCurrency())
+                                        .type(PaymentType.ORDER_PAYMENT.toString())
+                                        .walletId(wallet.getId())
+                                        .status(Status.SUCCESS)
+                                        .build();
+                        walletTransactionRepository.save(walletTransaction);
 
-            Map<String, Object> jsonMap = new HashMap<>();
-            jsonMap.put("ip", event.getIp());
-            jsonMap.put("amount", pay.getAmount());
-            jsonMap.put("metadata", pay.getMetadata());
-            jsonMap.put("txnRef", pay.getTxnRef());
+                        PaymentSuccessedEvent paymentSuccessedEvent = PaymentSuccessedEvent.builder()
+                                        .orderId(pay.getOrderId().toString())
+                                        .paymentId(pay.getId().toString())
+                                        .userId(pay.getUserId().toString())
+                                        .build();
+                        OutboxEvent outboxEvent = OutboxEvent.builder()
+                                        .eventType(KafkaTopic.PAYMENT_SUCCESS.name())
+                                        .payload(jsonParserUtil.toJson(paymentSuccessedEvent))
+                                        .aggregateId(pay.getId().toString())
+                                        .aggregateType("PAYMENT")
+                                        .status("PENDING")
+                                        .build();
 
-            ObjectMapper mapper = new ObjectMapper();
-            String jsonString = mapper.writeValueAsString(jsonMap);
-            PaymentAttempt paymentAttempt = new PaymentAttempt();
-            paymentAttempt.setAttemptData(jsonString);
-            paymentAttempt.setPaymentId(UUID.fromString(event.getPaymentId()));
-            paymentAttempt.setStatus(Status.CREATED);
+                        outboxRepository.save(outboxEvent);
 
-            paymentAttemptRepository.save(paymentAttempt);
+                        Map<String, Object> jsonMap = new HashMap<>();
+                        jsonMap.put("ip", event.getIp());
+                        jsonMap.put("amount", pay.getAmount());
+                        jsonMap.put("metadata", pay.getMetadata());
+                        jsonMap.put("txnRef", pay.getTxnRef());
+
+                        ObjectMapper mapper = new ObjectMapper();
+                        String jsonString = mapper.writeValueAsString(jsonMap);
+                        PaymentAttempt paymentAttempt = new PaymentAttempt();
+                        paymentAttempt.setAttemptData(jsonString);
+                        paymentAttempt.setPaymentId(UUID.fromString(event.getPaymentId()));
+                        paymentAttempt.setStatus(Status.CREATED);
+
+                        paymentAttemptRepository.save(paymentAttempt);
+                }
         }
-    }
 
 }

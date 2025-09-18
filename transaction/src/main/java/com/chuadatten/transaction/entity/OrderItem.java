@@ -11,9 +11,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 
 
@@ -21,6 +24,8 @@ import lombok.Data;
 @Table(name = "order_items")
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderItem {
 
     @Id
@@ -45,12 +50,15 @@ public class OrderItem {
     @Column(nullable = false)
     private int quantity;
 
-    @Column(nullable = false, insertable = false, updatable = false)
+    @Column(nullable = false)
     private BigDecimal subtotal;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    // Getters & Setters
-    // ...
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.subtotal = this.unitPrice.multiply(BigDecimal.valueOf(this.quantity));
+    }
 }

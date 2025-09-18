@@ -7,6 +7,10 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import com.chuadatten.user.entity.TrustingDevice;
+import com.chuadatten.user.entity.WhiteList;
+import com.chuadatten.user.otp.OtpModel;
+
 
 @Configuration
 public class RedisConfig {
@@ -21,7 +25,7 @@ public class RedisConfig {
         WhiteListTemplate template = new WhiteListTemplate();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(WhiteListTemplate.class));
+        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(WhiteList.class));
         return template;
     }
 
@@ -30,7 +34,7 @@ public class RedisConfig {
         DeviceRedisTemplate template = new DeviceRedisTemplate();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(DeviceRedisTemplate.class));
+        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(TrustingDevice.class));
         return template;
     }
 
@@ -39,7 +43,7 @@ public class RedisConfig {
         OtpRedisTemplate template = new OtpRedisTemplate();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(OtpRedisTemplate.class));
+        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(OtpModel.class));
         return template;
     }
 }
