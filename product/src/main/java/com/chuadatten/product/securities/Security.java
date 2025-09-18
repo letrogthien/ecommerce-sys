@@ -23,11 +23,22 @@ public class Security {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
+        http.cors(cors -> cors
+            .configurationSource(request -> {
+                org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+                config.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
+                config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                config.setAllowedHeaders(java.util.List.of("*"));
+                config.setAllowCredentials(true);
+                return config;
+            })
+        );
 
         http.authorizeHttpRequests(auth -> auth
             // --- Public ---
             .requestMatchers(HttpMethod.GET, "/api/v1/product-service/products/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/product-service/categories/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/v1/product-service/product-variants/**").permitAll()
 
             // --- USER ---
             .requestMatchers(HttpMethod.POST, "/api/v1/product-service/product-variants/*/reserve").hasAuthority(RoleName.ROLE_USER.name())
@@ -46,6 +57,9 @@ public class Security {
 
             // --- ADMIN ---
             .requestMatchers("/api/v1/product-service/admin/**").hasAuthority(RoleName.ROLE_ADMIN.name())
+
+            .requestMatchers("/swagger-ui/**").permitAll()
+            .requestMatchers("/v3/api-docs/**").permitAll()
 
             // --- Default ---
             .anyRequest().authenticated()

@@ -31,7 +31,7 @@ public class KycServiceImpl implements KycService {
     @Override
     public ApiResponse<UserVerificationDto> getVerificationRequest(UUID id) {
         return ApiResponse.<UserVerificationDto>builder()
-                .data(userKycMapper.toDto(userVerificationRepository.findById(id).orElseThrow(
+                .data(userKycMapper.toDto(userVerificationRepository.findByUserId(id).orElseThrow(
                         () -> new CustomException(ErrorCode.VERIFICATION_NOT_EXIST))))
                 .build();
     }

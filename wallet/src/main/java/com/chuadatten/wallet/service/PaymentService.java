@@ -25,6 +25,28 @@ public interface PaymentService {
      */
     ApiResponse<PaymentDto> getPaymentStatus(UUID paymentId);
 
+
+    /**
+     * Get payment by ID
+     * 
+     * @param paymentId ID of the payment
+     * @return ApiResponse containing payment information
+     */
+    ApiResponse<PaymentDto> getPaymentById(UUID paymentId);
+
+
+    /**
+     * Get payment by order ID
+     * 
+     * @param orderId ID of the order
+     * @return ApiResponse containing payment information
+     */
+    ApiResponse<PaymentDto> getPaymentByOrderId(UUID orderId);
+
+
+
+
+
     /**
      * Get all payments of a user
      * 

@@ -1,0 +1,452 @@
+[{
+  "_id": {
+    "$oid": "68c96216afb33b0ee92b5c7b"
+  },
+  "userId": "user_001",
+  "slug": "lien-quan-mobile-vip-15",
+  "name": "Tài khoản Liên Quân Mobile VIP 15",
+  "description": "Tài khoản Liên Quân Mobile VIP 15 với 150+ tướng, 500+ skin rare. Có nhiều skin limited edition và ranking Kim Cương. Tài khoản clean, không vi phạm, bảo hành 1 tháng.",
+  "active": "ACTIVE",
+  "categoryIds": [
+    "68c960d4afb33b0ee92b5c63"
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/images/lien-quan-vip15-1.jpg",
+      "alt": "Liên Quân Mobile VIP 15 Account",
+      "main": true,
+      "position": 1,
+      "width": 800,
+      "height": 600
+    },
+    {
+      "url": "https://cdn.example.com/images/lien-quan-vip15-heroes.jpg",
+      "alt": "Heroes Collection",
+      "main": false,
+      "position": 2,
+      "width": 800,
+      "height": 600
+    }
+  ],
+  "attributes": {
+    "game": "Liên Quân Mobile",
+    "vipLevel": "VIP 15",
+    "server": "Việt Nam",
+    "heroes": "150+",
+    "skins": "500+",
+    "rank": "Kim Cương"
+  },
+  "basePrice": 2500000,
+  "currency": "VND",
+  "tags": [
+    "lienquan",
+    "mobile",
+    "vip15",
+    "account",
+    "moba"
+  ],
+  "ratingAvg": 4.8,
+  "ratingCount": 234,
+  "softDeletedAt": null,
+  "createdAt": "2024-01-15T08:00:00Z",
+  "updatedAt": "2024-02-01T10:30:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96216afb33b0ee92b5c7c"
+  },
+  "userId": "user_002",
+  "slug": "pubg-mobile-conqueror",
+  "name": "Tài khoản PUBG Mobile Conqueror",
+  "description": "Tài khoản PUBG Mobile rank Conqueror với 2000+ UC, nhiều skin M416 Glacier, AWM Dragon Hunter. Có Royale Pass từ Season 1. KD ratio 5.2, win rate 35%.",
+  "active": "ACTIVE",
+  "categoryIds": [
+    "68c960d4afb33b0ee92b5c64"
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/images/pubg-conqueror-1.jpg",
+      "alt": "PUBG Mobile Conqueror Account",
+      "main": true,
+      "position": 1,
+      "width": 800,
+      "height": 600
+    }
+  ],
+  "attributes": {
+    "game": "PUBG Mobile",
+    "rank": "Conqueror",
+    "server": "Asia",
+    "kd": "5.2",
+    "winRate": "35%",
+    "royalePass": "Season 1+"
+  },
+  "basePrice": 3200000,
+  "currency": "VND",
+  "tags": [
+    "pubg",
+    "mobile",
+    "conqueror",
+    "battle-royale",
+    "account"
+  ],
+  "ratingAvg": 4.9,
+  "ratingCount": 156,
+  "softDeletedAt": null,
+  "createdAt": "2024-01-20T09:15:00Z",
+  "updatedAt": "2024-02-01T14:45:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96216afb33b0ee92b5c7d"
+  },
+  "userId": "user_003",
+  "slug": "steam-gift-card-500k",
+  "name": "Steam Gift Card 500.000 VNĐ",
+  "description": "Steam Gift Card trị giá 500.000 VNĐ, có thể sử dụng để mua game, DLC và nội dung số trên Steam. Code giao ngay sau khi thanh toán thành công. Bảo hành 100% hoạt động.",
+  "active": "ACTIVE",
+  "categoryIds": [
+    "68c960d4afb33b0ee92b5c67"
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/images/steam-gift-card-500k.jpg",
+      "alt": "Steam Gift Card 500K VND",
+      "main": true,
+      "position": 1,
+      "width": 800,
+      "height": 600
+    }
+  ],
+  "attributes": {
+    "platform": "Steam",
+    "value": "500000",
+    "currency": "VND",
+    "region": "Vietnam",
+    "delivery": "Instant"
+  },
+  "basePrice": 515000,
+  "currency": "VND",
+  "tags": [
+    "steam",
+    "giftcard",
+    "game",
+    "digital",
+    "instant"
+  ],
+  "ratingAvg": 4.9,
+  "ratingCount": 1567,
+  "softDeletedAt": null,
+  "createdAt": "2024-01-20T09:15:00Z",
+  "updatedAt": "2024-01-25T14:45:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96216afb33b0ee92b5c7e"
+  },
+  "userId": "user_004",
+  "slug": "microsoft-office-2021-pro",
+  "name": "Microsoft Office 2021 Professional Plus",
+  "description": "Bản quyền Microsoft Office 2021 Professional Plus lifetime. Bao gồm Word, Excel, PowerPoint, Outlook, Access, Publisher. Kích hoạt online, hỗ trợ cài đặt 24/7.",
+  "active": "ACTIVE",
+  "categoryIds": [
+    "68c960d4afb33b0ee92b5c6b"
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/images/office-2021-pro.jpg",
+      "alt": "Microsoft Office 2021 Professional Plus",
+      "main": true,
+      "position": 1,
+      "width": 800,
+      "height": 600
+    }
+  ],
+  "attributes": {
+    "software": "Microsoft Office",
+    "version": "2021 Professional Plus",
+    "license": "Lifetime",
+    "devices": "1 PC",
+    "language": "Multi-language"
+  },
+  "basePrice": 450000,
+  "currency": "VND",
+  "tags": [
+    "office",
+    "microsoft",
+    "software",
+    "license",
+    "professional"
+  ],
+  "ratingAvg": 4.7,
+  "ratingCount": 892,
+  "softDeletedAt": null,
+  "createdAt": "2024-02-01T10:00:00Z",
+  "updatedAt": "2024-02-05T16:20:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96216afb33b0ee92b5c7f"
+  },
+  "userId": "user_005",
+  "slug": "netflix-premium-family-1-nam",
+  "name": "Netflix Premium Family 1 năm",
+  "description": "Tài khoản Netflix Premium Family 1 năm, xem 4K Ultra HD, chia sẻ 4 profile. Bảo hành 12 tháng, thay thế miễn phí nếu có vấn đề. Giao tài khoản ngay sau khi thanh toán.",
+  "active": "ACTIVE",
+  "categoryIds": [
+    "68c960d4afb33b0ee92b5c72"
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/images/netflix-premium-family.jpg",
+      "alt": "Netflix Premium Family Account",
+      "main": true,
+      "position": 1,
+      "width": 800,
+      "height": 600
+    }
+  ],
+  "attributes": {
+    "service": "Netflix",
+    "plan": "Premium Family",
+    "duration": "12 months",
+    "quality": "4K Ultra HD",
+    "profiles": "4"
+  },
+  "basePrice": 1200000,
+  "currency": "VND",
+  "tags": [
+    "netflix",
+    "streaming",
+    "premium",
+    "family",
+    "4k"
+  ],
+  "ratingAvg": 4.6,
+  "ratingCount": 445,
+  "softDeletedAt": null,
+  "createdAt": "2024-01-10T11:30:00Z",
+  "updatedAt": "2024-01-15T09:45:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96216afb33b0ee92b5c80"
+  },
+  "userId": "user_006",
+  "slug": "cyberpunk-2077-steam-key",
+  "name": "Cyberpunk 2077 - Steam Key",
+  "description": "Key game Cyberpunk 2077 cho Steam. Bao gồm Phantom Liberty DLC. Key Global, kích hoạt được toàn thế giới. Giao key ngay lập tức sau thanh toán.",
+  "active": "ACTIVE",
+  "categoryIds": [
+    "68c960d4afb33b0ee92b5c6f"
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/images/cyberpunk-2077-steam.jpg",
+      "alt": "Cyberpunk 2077 Steam Key",
+      "main": true,
+      "position": 1,
+      "width": 800,
+      "height": 600
+    }
+  ],
+  "attributes": {
+    "platform": "Steam",
+    "region": "Global",
+    "dlc": "Phantom Liberty included",
+    "language": "Multi-language",
+    "delivery": "Instant"
+  },
+  "basePrice": 890000,
+  "currency": "VND",
+  "tags": [
+    "cyberpunk",
+    "steam",
+    "key",
+    "rpg",
+    "global"
+  ],
+  "ratingAvg": 4.5,
+  "ratingCount": 234,
+  "softDeletedAt": null,
+  "createdAt": "2024-02-05T14:20:00Z",
+  "updatedAt": "2024-02-10T09:30:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96216afb33b0ee92b5c81"
+  },
+  "userId": "user_007",
+  "slug": "wow-account-level-80",
+  "name": "World of Warcraft Account Level 80",
+  "description": "Tài khoản World of Warcraft với nhân vật level 80, có mount rare và gear epic. Server Stormrage US, faction Alliance. Bao gồm tất cả expansion đến Dragonflight.",
+  "active": "ACTIVE",
+  "categoryIds": [
+    "68c960d4afb33b0ee92b5c65"
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/images/wow-account-lvl80.jpg",
+      "alt": "World of Warcraft Account Level 80",
+      "main": true,
+      "position": 1,
+      "width": 800,
+      "height": 600
+    }
+  ],
+  "attributes": {
+    "game": "World of Warcraft",
+    "level": "80",
+    "server": "Stormrage US",
+    "faction": "Alliance",
+    "expansion": "Dragonflight",
+    "class": "Paladin"
+  },
+  "basePrice": 5500000,
+  "currency": "VND",
+  "tags": [
+    "wow",
+    "mmorpg",
+    "level80",
+    "alliance",
+    "account"
+  ],
+  "ratingAvg": 4.8,
+  "ratingCount": 89,
+  "softDeletedAt": null,
+  "createdAt": "2024-01-25T16:45:00Z",
+  "updatedAt": "2024-02-02T11:20:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96216afb33b0ee92b5c82"
+  },
+  "userId": "user_008",
+  "slug": "spotify-premium-6-thang",
+  "name": "Spotify Premium 6 tháng",
+  "description": "Tài khoản Spotify Premium 6 tháng, nghe nhạc không quảng cáo, tải offline unlimited. Bảo hành 6 tháng full, thay thế nếu có vấn đề.",
+  "active": "ACTIVE",
+  "categoryIds": [
+    "68c960d4afb33b0ee92b5c73"
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/images/spotify-premium-6m.jpg",
+      "alt": "Spotify Premium 6 months",
+      "main": true,
+      "position": 1,
+      "width": 800,
+      "height": 600
+    }
+  ],
+  "attributes": {
+    "service": "Spotify",
+    "plan": "Premium",
+    "duration": "6 months",
+    "quality": "320kbps",
+    "offline": "Unlimited downloads"
+  },
+  "basePrice": 280000,
+  "currency": "VND",
+  "tags": [
+    "spotify",
+    "premium",
+    "music",
+    "streaming",
+    "6months"
+  ],
+  "ratingAvg": 4.7,
+  "ratingCount": 678,
+  "softDeletedAt": null,
+  "createdAt": "2024-02-01T13:15:00Z",
+  "updatedAt": "2024-02-08T10:40:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96216afb33b0ee92b5c83"
+  },
+  "userId": "user_009",
+  "slug": "nordvpn-3-nam",
+  "name": "NordVPN 3 năm Premium",
+  "description": "Tài khoản NordVPN Premium 3 năm, 6 thiết bị đồng thời, 5400+ server toàn cầu. Hỗ trợ P2P, kill switch, CyberSec. Bảo hành toàn bộ thời gian sử dụng.",
+  "active": "ACTIVE",
+  "categoryIds": [
+    "68c960d4afb33b0ee92b5c76"
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/images/nordvpn-3y.jpg",
+      "alt": "NordVPN 3 years Premium",
+      "main": true,
+      "position": 1,
+      "width": 800,
+      "height": 600
+    }
+  ],
+  "attributes": {
+    "service": "NordVPN",
+    "plan": "Premium",
+    "duration": "3 years",
+    "devices": "6 simultaneous",
+    "servers": "5400+",
+    "features": "P2P, Kill Switch, CyberSec"
+  },
+  "basePrice": 1800000,
+  "currency": "VND",
+  "tags": [
+    "nordvpn",
+    "vpn",
+    "premium",
+    "3years",
+    "security"
+  ],
+  "ratingAvg": 4.9,
+  "ratingCount": 334,
+  "softDeletedAt": null,
+  "createdAt": "2024-01-28T09:30:00Z",
+  "updatedAt": "2024-02-06T15:25:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c96216afb33b0ee92b5c84"
+  },
+  "userId": "user_010",
+  "slug": "google-play-gift-card-200k",
+  "name": "Google Play Gift Card 200K",
+  "description": "Google Play Gift Card 200.000 VNĐ để mua ứng dụng, game, phim và sách trên Google Play Store. Mã code giao ngay, sử dụng được toàn quốc.",
+  "active": "ACTIVE",
+  "categoryIds": [
+    "68c960d4afb33b0ee92b5c68"
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/images/gplay-card-200k.jpg",
+      "alt": "Google Play Gift Card 200K",
+      "main": true,
+      "position": 1,
+      "width": 800,
+      "height": 600
+    }
+  ],
+  "attributes": {
+    "platform": "Google Play",
+    "value": "200000",
+    "currency": "VND",
+    "region": "Vietnam",
+    "delivery": "Instant code"
+  },
+  "basePrice": 205000,
+  "currency": "VND",
+  "tags": [
+    "googleplay",
+    "giftcard",
+    "200k",
+    "vietnam",
+    "instant"
+  ],
+  "ratingAvg": 4.8,
+  "ratingCount": 892,
+  "softDeletedAt": null,
+  "createdAt": "2024-02-03T11:45:00Z",
+  "updatedAt": "2024-02-09T14:30:00Z"
+}]

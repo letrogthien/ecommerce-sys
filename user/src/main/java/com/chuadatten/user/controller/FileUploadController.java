@@ -34,6 +34,7 @@ public class FileUploadController {
      * API GET file
      */
     @GetMapping("/{folder}/{id}/{fileName:.+}")
+    
     public ResponseEntity<Resource> getFile(
             @PathVariable String folder,
             @PathVariable String id,

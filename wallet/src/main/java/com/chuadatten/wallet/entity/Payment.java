@@ -72,7 +72,7 @@ public class Payment {
     @Column(name = "idempotency_key", length = 255)
     private String idempotencyKey;
 
-    @Column(name = "metadata", columnDefinition = "JSON")
+    @Column(name = "metadata")
     private String metadata;
 
     @Column(name = "txn_ref", length = 255)

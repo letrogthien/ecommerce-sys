@@ -2,6 +2,7 @@ package com.chuadatten.wallet.service.impl;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -60,10 +61,10 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment pay = paymentRepository.findById(paymentId).orElseThrow(
                 () -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
-        if (userId != pay.getUserId()) {
+        if (!userId.equals(pay.getUserId()) ) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
-        if (pay.getStatus() != Status.CREATED) {
+        if (!pay.getStatus().equals(Status.CREATED)) {
             handlePaymentStatus(pay.getStatus());
         }
         if (paymentMethod.equals(PaymentMethod.WALLET)) {
@@ -130,9 +131,27 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public ApiResponse<PaymentDto> getPaymentStatus(UUID paymentId) {
-        PaymentDto paymentDto = paymentMapper.toDto(
-                paymentRepository.findById(paymentId).orElseThrow(
-                        () -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND)));
+        return getPaymentById(paymentId);
+    }
+
+    @Override
+    public ApiResponse<PaymentDto> getPaymentById(UUID paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
+        PaymentDto paymentDto = paymentMapper.toDto(payment);
+        return ApiResponse.<PaymentDto>builder()
+                .data(paymentDto)
+                .build();
+    }
+
+    @Override
+    public ApiResponse<PaymentDto> getPaymentByOrderId(UUID orderId) {
+        List<Payment> payments = paymentRepository.findByOrderId(orderId);
+        if (payments.isEmpty()) {
+            throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
+        }
+        Payment payment = payments.get(0);
+        PaymentDto paymentDto = paymentMapper.toDto(payment);
         return ApiResponse.<PaymentDto>builder()
                 .data(paymentDto)
                 .build();
@@ -195,8 +214,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public void refundPayment(UUID paymentId, UUID sellerId, String ip)
             throws JsonProcessingException, InvalidKeyException, NumberFormatException, NoSuchAlgorithmException {
-        return;
-
+        // TODO: Implement refund payment logic
     }
 
     @Override

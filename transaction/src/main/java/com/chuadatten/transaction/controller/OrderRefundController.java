@@ -18,6 +18,7 @@ import com.chuadatten.transaction.request.OrderRefundCreateRq;
 import com.chuadatten.transaction.responses.ApiResponse;
 import com.chuadatten.transaction.service.OrderRefundService;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -32,7 +33,7 @@ public class OrderRefundController {
      */
     @PostMapping
     public ApiResponse<OrderRefundDto> requestRefund(
-            @JwtClaims("id") UUID buyerId,
+            @Parameter(hidden = true) @JwtClaims("id") UUID buyerId,
             @RequestBody OrderRefundCreateRq refundCreateRq) {
         return orderRefundService.requestRefund(refundCreateRq, buyerId);
     }
@@ -43,7 +44,7 @@ public class OrderRefundController {
      */
     @GetMapping("/order/{orderId}")
     public ApiResponse<OrderRefundDto> getRefundStatus(
-            @JwtClaims("id") UUID buyerId,
+            @Parameter(hidden = true) @JwtClaims("id") UUID buyerId,
             @PathVariable UUID orderId) {
         return orderRefundService.getRefundStatus(orderId, buyerId);
     }

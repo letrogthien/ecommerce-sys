@@ -1,0 +1,436 @@
+[{
+  "_id": {
+    "$oid": "68c95d85afb33b0ee92b5c5d"
+  },
+  "slug": "gaming-accounts",
+  "name": "Tài khoản Game",
+  "parentId": null,
+  "ancestors": [],
+  "path": "gaming-accounts",
+  "sortOrder": 1,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c95d85afb33b0ee92b5c5e"
+  },
+  "slug": "gift-cards",
+  "name": "Thẻ Gift Card",
+  "parentId": null,
+  "ancestors": [],
+  "path": "gift-cards",
+  "sortOrder": 2,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c95d85afb33b0ee92b5c5f"
+  },
+  "slug": "software-licenses",
+  "name": "Bản quyền phần mềm",
+  "parentId": null,
+  "ancestors": [],
+  "path": "software-licenses",
+  "sortOrder": 3,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c95d85afb33b0ee92b5c60"
+  },
+  "slug": "game-codes",
+  "name": "Mã game & DLC",
+  "parentId": null,
+  "ancestors": [],
+  "path": "game-codes",
+  "sortOrder": 4,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c95d85afb33b0ee92b5c61"
+  },
+  "slug": "streaming-services",
+  "name": "Dịch vụ Streaming",
+  "parentId": null,
+  "ancestors": [],
+  "path": "streaming-services",
+  "sortOrder": 5,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c95d85afb33b0ee92b5c62"
+  },
+  "slug": "vpn-services",
+  "name": "Dịch vụ VPN",
+  "parentId": null,
+  "ancestors": [],
+  "path": "vpn-services",
+  "sortOrder": 6,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c63"
+  },
+  "slug": "moba-accounts",
+  "name": "Tài khoản MOBA",
+  "parentId": "68c95d85afb33b0ee92b5c5d",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5d"
+  ],
+  "path": "gaming-accounts/moba-accounts",
+  "sortOrder": 1,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c64"
+  },
+  "slug": "battle-royale-accounts",
+  "name": "Tài khoản Battle Royale",
+  "parentId": "68c95d85afb33b0ee92b5c5d",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5d"
+  ],
+  "path": "gaming-accounts/battle-royale-accounts",
+  "sortOrder": 2,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c65"
+  },
+  "slug": "mmorpg-accounts",
+  "name": "Tài khoản MMORPG",
+  "parentId": "68c95d85afb33b0ee92b5c5d",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5d"
+  ],
+  "path": "gaming-accounts/mmorpg-accounts",
+  "sortOrder": 3,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c66"
+  },
+  "slug": "fps-accounts",
+  "name": "Tài khoản FPS",
+  "parentId": "68c95d85afb33b0ee92b5c5d",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5d"
+  ],
+  "path": "gaming-accounts/fps-accounts",
+  "sortOrder": 4,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c67"
+  },
+  "slug": "steam-cards",
+  "name": "Steam Gift Card",
+  "parentId": "68c95d85afb33b0ee92b5c5e",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5e"
+  ],
+  "path": "gift-cards/steam-cards",
+  "sortOrder": 1,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c68"
+  },
+  "slug": "google-play-cards",
+  "name": "Google Play Gift Card",
+  "parentId": "68c95d85afb33b0ee92b5c5e",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5e"
+  ],
+  "path": "gift-cards/google-play-cards",
+  "sortOrder": 2,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c69"
+  },
+  "slug": "app-store-cards",
+  "name": "App Store Gift Card",
+  "parentId": "68c95d85afb33b0ee92b5c5e",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5e"
+  ],
+  "path": "gift-cards/app-store-cards",
+  "sortOrder": 3,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c6a"
+  },
+  "slug": "xbox-cards",
+  "name": "Xbox Gift Card",
+  "parentId": "68c95d85afb33b0ee92b5c5e",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5e"
+  ],
+  "path": "gift-cards/xbox-cards",
+  "sortOrder": 4,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c6b"
+  },
+  "slug": "office-licenses",
+  "name": "Microsoft Office",
+  "parentId": "68c95d85afb33b0ee92b5c5f",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5f"
+  ],
+  "path": "software-licenses/office-licenses",
+  "sortOrder": 1,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c6c"
+  },
+  "slug": "windows-licenses",
+  "name": "Windows License",
+  "parentId": "68c95d85afb33b0ee92b5c5f",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5f"
+  ],
+  "path": "software-licenses/windows-licenses",
+  "sortOrder": 2,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c6d"
+  },
+  "slug": "antivirus-licenses",
+  "name": "Phần mềm Antivirus",
+  "parentId": "68c95d85afb33b0ee92b5c5f",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5f"
+  ],
+  "path": "software-licenses/antivirus-licenses",
+  "sortOrder": 3,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c6e"
+  },
+  "slug": "design-software",
+  "name": "Phần mềm Thiết kế",
+  "parentId": "68c95d85afb33b0ee92b5c5f",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c5f"
+  ],
+  "path": "software-licenses/design-software",
+  "sortOrder": 4,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c6f"
+  },
+  "slug": "steam-game-keys",
+  "name": "Steam Game Keys",
+  "parentId": "68c95d85afb33b0ee92b5c60",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c60"
+  ],
+  "path": "game-codes/steam-game-keys",
+  "sortOrder": 1,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c70"
+  },
+  "slug": "epic-games-keys",
+  "name": "Epic Games Keys",
+  "parentId": "68c95d85afb33b0ee92b5c60",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c60"
+  ],
+  "path": "game-codes/epic-games-keys",
+  "sortOrder": 2,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c71"
+  },
+  "slug": "dlc-expansions",
+  "name": "DLC & Expansions",
+  "parentId": "68c95d85afb33b0ee92b5c60",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c60"
+  ],
+  "path": "game-codes/dlc-expansions",
+  "sortOrder": 3,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c72"
+  },
+  "slug": "netflix-accounts",
+  "name": "Netflix",
+  "parentId": "68c95d85afb33b0ee92b5c61",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c61"
+  ],
+  "path": "streaming-services/netflix-accounts",
+  "sortOrder": 1,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c73"
+  },
+  "slug": "spotify-accounts",
+  "name": "Spotify Premium",
+  "parentId": "68c95d85afb33b0ee92b5c61",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c61"
+  ],
+  "path": "streaming-services/spotify-accounts",
+  "sortOrder": 2,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c74"
+  },
+  "slug": "youtube-premium",
+  "name": "YouTube Premium",
+  "parentId": "68c95d85afb33b0ee92b5c61",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c61"
+  ],
+  "path": "streaming-services/youtube-premium",
+  "sortOrder": 3,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c75"
+  },
+  "slug": "disney-plus",
+  "name": "Disney Plus",
+  "parentId": "68c95d85afb33b0ee92b5c61",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c61"
+  ],
+  "path": "streaming-services/disney-plus",
+  "sortOrder": 4,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c76"
+  },
+  "slug": "nordvpn",
+  "name": "NordVPN",
+  "parentId": "68c95d85afb33b0ee92b5c62",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c62"
+  ],
+  "path": "vpn-services/nordvpn",
+  "sortOrder": 1,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c77"
+  },
+  "slug": "expressvpn",
+  "name": "ExpressVPN",
+  "parentId": "68c95d85afb33b0ee92b5c62",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c62"
+  ],
+  "path": "vpn-services/expressvpn",
+  "sortOrder": 2,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+},
+{
+  "_id": {
+    "$oid": "68c960d4afb33b0ee92b5c78"
+  },
+  "slug": "surfshark",
+  "name": "Surfshark VPN",
+  "parentId": "68c95d85afb33b0ee92b5c62",
+  "ancestors": [
+    "68c95d85afb33b0ee92b5c62"
+  ],
+  "path": "vpn-services/surfshark",
+  "sortOrder": 3,
+  "status": "ACTIVE",
+  "createdAt": "2024-01-02T00:00:00Z",
+  "updatedAt": "2024-01-02T00:00:00Z"
+}]

@@ -40,25 +40,15 @@ public class VnpayUltils {
 
     }
 
-    public String refundUrl(String ip,
-            BigInteger total,
-            String orderInfo,
-            String txnRef,
-            String vnpTransactionNo,
-            String transDate)
-            throws InvalidKeyException, NoSuchAlgorithmException {
-        var params = buildParamsRefund(
-                ip,
-                total,
-                orderInfo,
-                txnRef,
-                vnpTransactionNo,
-                transDate);
-        return buildUrl(params);
-
-    }
-
     private String buildUrl(Map<String, String> params) throws InvalidKeyException, NoSuchAlgorithmException {
+        // Validate required config values
+        if (payConfig.getVnpHashSecret() == null) {
+            throw new IllegalStateException("VnpHashSecret is null in PayConfig");
+        }
+        if (payConfig.getVnpPayUrl() == null) {
+            throw new IllegalStateException("VnpPayUrl is null in PayConfig");
+        }
+
         List<String> fieldNames = new ArrayList<>(params.keySet());
         Collections.sort(fieldNames);
 
@@ -121,11 +111,17 @@ public class VnpayUltils {
             throws InvalidKeyException, NoSuchAlgorithmException {
 
         if (key == null || data == null) {
-            throw new NullPointerException();
+            throw new NullPointerException("Key or data is null. Key: " + key + ", Data: " + data);
         }
-        final Mac hmac512 = Mac.getInstance(payConfig.getVnpHashType());
+
+        String hashType = payConfig.getVnpHashType();
+        if (hashType == null) {
+            throw new NullPointerException("VnpHashType is null in PayConfig");
+        }
+
+        final Mac hmac512 = Mac.getInstance(hashType);
         byte[] hmacKeyBytes = key.getBytes();
-        final SecretKeySpec secretKey = new SecretKeySpec(hmacKeyBytes, payConfig.getVnpHashType());
+        final SecretKeySpec secretKey = new SecretKeySpec(hmacKeyBytes, hashType);
         hmac512.init(secretKey);
         byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
         byte[] result = hmac512.doFinal(dataBytes);
@@ -142,16 +138,23 @@ public class VnpayUltils {
         String vnpCommand = payConfig.getVnpCommand();
         String vnpOrderInfo = detail.trim();
         String orderType = "other";
-        String vnpTxnRef = ref;
+        String vnpTxnRef = ref+System.currentTimeMillis();
         String vnpIpAddr = ip;
         String vnpTmnCode = payConfig.getVnpTmnCode();
-        BigInteger amount = total.multiply(BigInteger.valueOf(100));
+        int amount = total.multiply(BigInteger.valueOf(100)).intValue();
+        Calendar expire = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        expire.add(Calendar.MINUTE, 15); // VD: cho phép thanh toán trong 15 phút
+        String vnpExpireDate = formatter.format(expire.getTime());
+        
         Map<String, String> vnpParams = new HashMap<>();
         vnpParams.put("vnp_Version", vnpVersion);
         vnpParams.put("vnp_Command", vnpCommand);
         vnpParams.put("vnp_TmnCode", vnpTmnCode);
         vnpParams.put("vnp_Amount", String.valueOf(amount));
         vnpParams.put("vnp_CurrCode", "VND");
+        vnpParams.put("vnp_ExpireDate", vnpExpireDate);
         // String bankcode = payConfig.getVnpBankCode();
         // if (bankcode != null && !bankcode.isEmpty()) {
         // vnpParams.put("vnp_BankCode", bankcode);
@@ -163,43 +166,11 @@ public class VnpayUltils {
         vnpParams.put("vnp_Locale", "vn");
         vnpParams.put("vnp_ReturnUrl", payConfig.getVnpReturnUrl());
         vnpParams.put("vnp_IpAddr", vnpIpAddr);
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        
         String vnpCreateDate = formatter.format(cld.getTime());
         vnpParams.put("vnp_CreateDate", vnpCreateDate);
         return vnpParams;
-    }
 
-    private Map<String, String> buildParamsRefund(
-            String ip,
-            BigInteger total,
-            String orderInfo,
-            String txnRef,
-            String vnpTransactionNo,
-            String transDate) {
-        String vnpVersion = payConfig.getVnpVersion();
-        String vnpTmnCode = payConfig.getVnpTmnCode();
-        BigInteger amount = total.multiply(BigInteger.valueOf(100));
-
-        Map<String, String> vnpParams = new HashMap<>();
-        vnpParams.put("vnp_Version", vnpVersion);
-        vnpParams.put("vnp_Command", "refund");
-        vnpParams.put("vnp_TmnCode", vnpTmnCode);
-        vnpParams.put("vnp_TransactionType", "02");
-        vnpParams.put("vnp_TxnRef", txnRef);
-        vnpParams.put("vnp_Amount", String.valueOf(amount));
-        vnpParams.put("vnp_OrderInfo", orderInfo);
-        vnpParams.put("vnp_TransactionNo", vnpTransactionNo);
-        vnpParams.put("vnp_TransDate", transDate); // ngày giao dịch gốc
-        vnpParams.put("vnp_CreateBy", "system"); // ai thực hiện refund
-        vnpParams.put("vnp_IpAddr", ip);
-
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-        String vnpCreateDate = formatter.format(cld.getTime());
-        vnpParams.put("vnp_CreateDate", vnpCreateDate);
-
-        return vnpParams;
     }
 
 }

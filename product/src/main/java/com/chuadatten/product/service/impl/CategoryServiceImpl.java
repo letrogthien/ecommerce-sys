@@ -1,7 +1,9 @@
 package com.chuadatten.product.service.impl;
 
 import java.util.List;
+
 import org.springframework.stereotype.Service;
+
 import com.chuadatten.product.dto.CategoryDto;
 import com.chuadatten.product.entity.Category;
 import com.chuadatten.product.exceptions.CustomException;
@@ -46,6 +48,16 @@ public class CategoryServiceImpl implements CategoryService {
         return ApiResponse.<List<CategoryDto>>builder()
         .data(categoryMapper.toDtoList(category))
         .build();
+    }
+
+    @Override
+    public ApiResponse<List<CategoryDto>> getRoot() {
+        List<Category> categories = categoryRepository.findByParentIdIsNullOrderBySortOrderAsc()
+                .stream()
+                .toList();
+        return ApiResponse.<List<CategoryDto>>builder()
+                .data(categoryMapper.toDtoList(categories))
+                .build();
     }
 
 

@@ -2,8 +2,9 @@ package com.chuadatten.wallet.exceptions;
 
 
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
+
+import lombok.Getter;
 
 
 @Getter
@@ -43,6 +44,8 @@ public enum ErrorCode {
      PAYMENT_NOT_SUCCEEDED("E032", "Payment not succeeded", HttpStatus.BAD_REQUEST), 
      WALLET_NOT_FOUND("E033", "Wallet not found", HttpStatus.NOT_FOUND), 
      INSUFFICIENT_BALANCE("E034", "Insufficient balance", HttpStatus.BAD_REQUEST),
+     WITHDRAWAL_REQUEST_NOT_FOUND("E035", "Withdrawal request not found", HttpStatus.NOT_FOUND),
+     WITHDRAWAL_REQUEST_ALREADY_PROCESSED("E036", "Withdrawal request already processed", HttpStatus.BAD_REQUEST),
     ;
 
     private final String code;

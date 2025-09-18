@@ -30,7 +30,7 @@ DROP TABLE IF EXISTS `audit_logs`;
 CREATE TABLE `audit_logs`
 (
     `id`          binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())),
-    `user_id`     binary(16) DEFAULT NULL,
+    `user_id`     binary(16) DEFAULT (uuid_to_bin(uuid())) NULL,
     `action`      varchar(100) NOT NULL,
     `description` varchar(255) DEFAULT NULL,
     `created_at`  timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -51,12 +51,12 @@ DROP TABLE IF EXISTS `device_manager`;
 
 CREATE TABLE `device_manager`
 (
-    `id`            binary(16) NOT NULL,
+    `id`            binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
     `created_at`    datetime(6) NOT NULL,
     `device_name`   varchar(100) NOT NULL,
     `device_type`   varchar(50)  NOT NULL,
     `last_login_at` datetime(6) DEFAULT NULL,
-    `user_id`       binary(16) NOT NULL,
+    `user_id`       binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -70,7 +70,7 @@ DROP TABLE IF EXISTS `login_history`;
 CREATE TABLE `login_history`
 (
     `id`          binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())),
-    `user_id`     binary(16) NOT NULL,
+    `user_id`     binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())),
     `login_at`    timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     `ip_address`  varchar(45) DEFAULT NULL,
     `device_info` text,
@@ -93,7 +93,7 @@ DROP TABLE IF EXISTS `password_history`;
 CREATE TABLE `password_history`
 (
     `id`            binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())),
-    `user_id`       binary(16) NOT NULL,
+    `user_id`       binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())),
     `password_hash` varchar(255) NOT NULL,
     `created_at`    timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     `current_index` int          NOT NULL,
@@ -128,8 +128,8 @@ DROP TABLE IF EXISTS `user_roles`;
 CREATE TABLE `user_roles`
 (
     `id`          binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())),
-    `user_id` binary(16) NOT NULL,
-    `role_id` binary(16) NOT NULL,
+    `user_id` binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())),
+    `role_id` binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())),
     PRIMARY KEY (`user_id`, `role_id`),
     KEY       `role_id` (`role_id`),
     CONSTRAINT `user_roles_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user_auth` (`id`) ON DELETE CASCADE,
@@ -168,7 +168,7 @@ CREATE TABLE user_inf
 CREATE TABLE preferences
 (
     id                     binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())) PRIMARY KEY, -- UUID
-    user_id                binary(16) DEFAULT NULL,
+    user_id                binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
     notification_email     BOOLEAN   DEFAULT TRUE,
     notification_push      BOOLEAN   DEFAULT TRUE,
     preferred_currency     VARCHAR(10),             -- e.g., USD, BTC
@@ -183,9 +183,9 @@ CREATE TABLE preferences
 CREATE TABLE transactions
 (
     id               binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())) PRIMARY KEY, -- UUID
-    user_id          binary(16) DEFAULT NULL,
-    product_id       binary(16) DEFAULT NULL, -- UUID from Product Service
-    order_id         binary(16) DEFAULT NULL, -- UUID from Order Service
+    user_id          binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
+    product_id       binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL, -- UUID from Product Service
+    order_id         binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL, -- UUID from Order Service
     transaction_type VARCHAR(20)    NOT NULL,
     amount           DECIMAL(10, 2) NOT NULL,
     status           VARCHAR(20)    NOT NULL,
@@ -199,9 +199,9 @@ CREATE TABLE transactions
 CREATE TABLE seller_ratings
 (
     id             binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())) PRIMARY KEY, -- UUID
-    seller_id      binary(16) DEFAULT NULL,
-    buyer_id       binary(16) DEFAULT NULL,
-    transaction_id binary(16) DEFAULT NULL,
+    seller_id      binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
+    buyer_id       binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
+    transaction_id binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
     rating_score   TINYINT     NOT NULL CHECK (rating_score BETWEEN 1 AND 5),
     review_text    TEXT,
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -215,7 +215,7 @@ CREATE TABLE seller_ratings
 CREATE TABLE user_verifications
 (
     id                  binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())) PRIMARY KEY, -- UUID
-    user_id             binary(16) DEFAULT NULL,
+    user_id             binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
     verification_status VARCHAR(20) NOT NULL,
     face_id_url   VARCHAR(255),            -- Link to secure storage
 
@@ -231,7 +231,7 @@ CREATE TABLE user_verifications
 CREATE TABLE delete_kyc_requests
 (
     id           binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())) PRIMARY KEY, -- UUID
-    user_id      binary(16) DEFAULT NULL,
+    user_id      binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
     request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     selfie_url   VARCHAR(255),            -- Link to secure storage for selfie
     status       VARCHAR(20) NOT NULL,    -- e.g., 'pending', 'approved', 'rejected'
@@ -242,7 +242,7 @@ CREATE TABLE delete_kyc_requests
 CREATE TABLE billing_address
 (
     id             binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())) PRIMARY KEY,
-    user_id          binary(16) NOT NULL,
+    user_id          binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
     address        VARCHAR(255) NOT NULL,
     city           VARCHAR(100) NOT NULL,
     postal_code    VARCHAR(20)  NOT NULL,
@@ -257,7 +257,7 @@ CREATE TABLE billing_address
 CREATE TABLE seller_applications
 (
     id                 binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())) PRIMARY KEY,
-    user_id            binary(16) DEFAULT NULL,
+    user_id            binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
     application_status VARCHAR(30) NOT NULL, -- e.g., 'PENDING', 'APPROVED', 'REJECTED', 'DRAFT', 'SUBMITTED', 'NEEDS_MORE_INFO'
     submission_date    TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
     review_date        TIMESTAMP NULL,

@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/v1/product-service/product-variants")
@@ -64,4 +67,10 @@ public class ProductVariantController {
     public ApiResponse<ProductVariantDto> release(@PathVariable String variantId, @RequestParam int qty) {
         return productVariantService.release(variantId, qty);
     }
+
+    @GetMapping("/hot-deal")
+    public ApiResponse<List<ProductVariantDto>> getHotDeal(@RequestParam int limit) {
+        return productVariantService.getTopSold( limit);
+    }
+    
 }

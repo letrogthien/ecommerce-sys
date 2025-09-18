@@ -2,6 +2,7 @@ package com.chuadatten.user.services;
 
 
 import com.chuadatten.user.common.RoleName;
+import com.chuadatten.user.dto.UserAuthReturnDto;
 import com.chuadatten.user.requests.*;
 import com.chuadatten.user.responses.ApiResponse;
 import com.chuadatten.user.responses.LoginResponse;
@@ -35,7 +36,7 @@ public interface AuthService {
      * @param logoutRequest the logout request details
      * @return ApiResponse containing a success or failure message
      */
-    ApiResponse<String> logout(LogoutRequest logoutRequest);
+    ApiResponse<String> logout(String token);
 
     /**
      * Logs out the user from all sessions.
@@ -51,7 +52,7 @@ public interface AuthService {
      * @param accessTokenRequest the request containing the refresh token
      * @return ApiResponse containing the new access token
      */
-    ApiResponse<LoginResponse> accessToken(AccessTokenRequest accessTokenRequest);
+    ApiResponse<String> accessToken(String accessTokenRequest, HttpServletResponse response);
 
     /**
      * Changes the user's password.
@@ -77,6 +78,10 @@ public interface AuthService {
      * @return ApiResponse containing a success or failure message
      */
     ApiResponse<String> enableTwoFAuth(UUID userId);
+
+
+    ApiResponse<String> disAble2FaRequest(UUID userId);
+    
 
     /**
      * Disables two-factor authentication (2FA) for the user.
@@ -131,4 +136,8 @@ public interface AuthService {
      * @return ApiResponse containing a success or failure message
      */
     ApiResponse<String> assignRoleToUser(UUID userId, RoleName roleName);
+
+    ApiResponse<UserAuthReturnDto> getMe(UUID userId);
+
+    void clearCookies(HttpServletResponse response);
 }

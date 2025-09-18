@@ -39,29 +39,32 @@ public class EventListener {
 
     }
 
-    @KafkaListener(topics = "product.reservation.succeeded", groupId = "transaction-group")
+    @KafkaListener(topics = "product.reservation.success", groupId = "transaction-group")
     public void listenProductReservationSucceeded(ProductReservationSuccessEvent event) {
+        System.out.println("Received ProductReservationSuccessEvent: " + event);
         UUID orderId = UUID.fromString(event.getOrderId());
         orderRepository.findById(orderId).ifPresent(order -> {
             order.setTotalAmount(event.getSubtotal());
             order.setStatus(Status.READY_PAY);
             orderRepository.save(order);
+            OrderComfirmData orderComfirmData = OrderComfirmData.builder()
+                    .orderId(event.getOrderId())
+                    .buyerId(order.getBuyerId().toString())
+                    .totalAmount(event.getSubtotal())
+                    .idempotencyKey(orderId.toString().concat("-").concat("order"))
+                    .build();
+            System.out.println("Created OrderComfirmData: " + orderComfirmData);
+            OutboxEvent outboxEvent = OutboxEvent.builder()
+                    .eventType(KafkaTopic.ORDER_COMFIRM_DATA.name())
+                    .aggregateId(orderId.toString())
+                    .aggregateType(orderRepository.getClass().getName())
+                    .payload(jsonParserUtil.toJson(orderComfirmData))
+                    .status("PENDING")
+                    .build();
+
+            outboxRepository.save(outboxEvent);
         });
 
-        OrderComfirmData orderComfirmData = OrderComfirmData.builder()
-                .orderId(event.getOrderId())
-                .totalAmount(event.getSubtotal())
-                .idempotencyKey(orderId.toString().concat("-").concat("order"))
-                .build();
-        OutboxEvent outboxEvent = OutboxEvent.builder()
-                .eventType(KafkaTopic.ORDER_COMFIRM_DATA.name())
-                .aggregateId(orderId.toString())
-                .aggregateType(orderRepository.getClass().getName())
-                .payload(jsonParserUtil.toJson(orderComfirmData))
-                .status("PENDING")
-                .build();
-
-        outboxRepository.save(outboxEvent);
     }
 
     @KafkaListener(topics = "payment.success", groupId = "transaction-group")
@@ -71,7 +74,7 @@ public class EventListener {
             order.setStatus(Status.PAID);
             order.setPaymentStatus(Status.SUCCESS);
             orderRepository.save(order);
-            
+
             // Create OrderSuccess event with product details
             OrderSuccess orderSuccess = OrderSuccess.builder()
                     .orderId(order.getId().toString())
@@ -89,7 +92,6 @@ public class EventListener {
                             .toList())
                     .build();
 
-
             OutboxEvent outboxEvent = OutboxEvent.builder()
                     .eventType(KafkaTopic.ORDER_SUCCESS.name())
                     .aggregateId(orderId.toString())
@@ -105,9 +107,10 @@ public class EventListener {
     @KafkaListener(topics = "payment.payment.processing", groupId = "transaction-group")
     public void listenPaymentProcessing(PaymentProcessEvent event) {
         UUID orderId = UUID.fromString(event.getOrderId());
-        Order order = orderRepository.findById(orderId).orElseThrow(()-> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
 
-        if (order.getStatus() != Status.READY_PAY){
+        if (order.getStatus().equals(Status.CANCELLED) || order.getStatus().equals(Status.PAID)) {
             handleEventPayment(event, "FAILED");
         } else {
             order.setStatus(Status.PAYING);
@@ -117,8 +120,7 @@ public class EventListener {
         }
     }
 
-
-    private void handleEventPayment(PaymentProcessEvent event, String status){
+    private void handleEventPayment(PaymentProcessEvent event, String status) {
         OrderCheckingStatusEvent orderCheckingStatusEvent = OrderCheckingStatusEvent.builder()
                 .orderId(event.getOrderId())
                 .paymentId(event.getPaymentId())

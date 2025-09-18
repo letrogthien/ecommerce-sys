@@ -16,6 +16,7 @@ public class GetTokenResolver implements BearerTokenResolver {
         if (request.getCookies()!= null){
             for (var cookie : request.getCookies()) {
                 if ("access_token".equals(cookie.getName())) {
+                    System.out.println("Found access token in cookie" + cookie.getValue());
                     return cookie.getValue();
                 }
             }

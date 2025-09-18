@@ -66,9 +66,9 @@ public class OutBoxSchedule {
         List<OutboxEvent> locked = new ArrayList<>();
         for (int i = 0; i < size; i++) {
             OutboxEvent e = mongoTemplate.findAndModify(
-                    new Query(Criteria.where("status").is("PENDING"))
-                            .with(org.springframework.data.domain.Sort.by("createdAt").ascending()),
-                    new Update().set("status", "PROCESSING").set("lockedAt", Instant.now()),
+                    new Query(Criteria.where("status").is("PENDING").and("event_type").is(KafkaTopic.REGISTER.name()))
+                            .with(org.springframework.data.domain.Sort.by("created_at").ascending()),
+                    new Update().set("status", "PROCESSING").set("locked_at", Instant.now()),
                     org.springframework.data.mongodb.core.FindAndModifyOptions.options().returnNew(true),
                     OutboxEvent.class);
             if (e == null)
@@ -81,7 +81,7 @@ public class OutBoxSchedule {
     private void markPublished(OutboxEvent event) {
         mongoTemplate.updateFirst(
                 new Query(Criteria.where("_id").is(event.getId())),
-                new Update().set("status", "PUBLISHED").set("publishedAt", Instant.now()),
+                new Update().set("status", "PUBLISHED").set("published_at", Instant.now()),
                 OutboxEvent.class);
     }
 

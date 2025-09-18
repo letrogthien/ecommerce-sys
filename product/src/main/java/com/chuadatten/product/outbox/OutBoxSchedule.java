@@ -13,6 +13,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
 import com.chuadatten.product.common.JsonParserUtil;
 import com.chuadatten.product.kafka.KafkaTopic;
 
@@ -32,29 +33,38 @@ public class OutBoxSchedule {
      * Poll và publish event order created sang Kafka
      */
 
+
     @Scheduled(initialDelay = 5000, fixedDelay = 1000)
-    public void pollAndPublishReservationFailed() {
-        pollAndPublishHelper(KafkaTopic.PRODUCT_RESERVATION_FAILED.name());
+    public void orderCreated() {
+        pollAndPublish(KafkaTopic.ORDER_CREATED);
     }
 
     @Scheduled(initialDelay = 5000, fixedDelay = 1000)
-    public void pollAndPublishReservationSuccessed() {
-        pollAndPublishHelper(KafkaTopic.PRODUCT_RESERVATION_SUCCESS.name());
+    public void productReservationSuccess() {
+        pollAndPublish(KafkaTopic.PRODUCT_RESERVATION_SUCCESS);
     }
 
-    private void pollAndPublishHelper(String topicName) {
-        List<OutboxEvent> batch = lockNextBatch(BATCH_SIZE, topicName);
+    @Scheduled(initialDelay = 5000, fixedDelay = 1000)
+    public void orderSuccess() {
+        pollAndPublish(KafkaTopic.ORDER_SUCCESS);
+    }
+
+    @Scheduled(initialDelay = 5000, fixedDelay = 1000)
+    public void productReservationFailed() {
+        pollAndPublish(KafkaTopic.PRODUCT_RESERVATION_FAILED);
+    }
+
+    public void pollAndPublish(KafkaTopic topic) {
+        List<OutboxEvent> batch = lockNextBatch(BATCH_SIZE, topic.name());
         if (batch.isEmpty())
             return;
 
         for (OutboxEvent event : batch) {
             try {
-                Object orderCreatedEvent = jsonParserUtil.fromJson(event.getPayload(),
-                        Object.class);
-
+                Object eventObject = parserObject(topic, event.getPayload());
                 CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(
-                        KafkaTopic.ORDER_CREATED.getTopicName(),
-                        orderCreatedEvent);
+                        topic.getTopicName(),
+                        eventObject);
 
                 future.whenComplete((result, ex) -> {
                     if (ex != null) {
@@ -70,6 +80,21 @@ public class OutBoxSchedule {
         }
     }
 
+    private Object parserObject(KafkaTopic topic, String payload) {
+        switch (topic) {
+            case ORDER_CREATED:
+                return jsonParserUtil.fromJson(payload, com.chuadatten.event.OrderCreatedEvent.class);
+            case PRODUCT_RESERVATION_SUCCESS:
+                return jsonParserUtil.fromJson(payload, com.chuadatten.event.ProductReservationSuccessEvent.class);
+            case PRODUCT_RESERVATION_FAILED:
+                return jsonParserUtil.fromJson(payload, com.chuadatten.event.ProductReservationFailedEvent.class);
+            case ORDER_SUCCESS:
+                return jsonParserUtil.fromJson(payload, com.chuadatten.event.OrderSuccess.class);
+            default:
+                return jsonParserUtil.fromJson(payload, Object.class);
+        }
+    }
+
     /**
      * Lock batch bằng findAndModify (tránh nhiều poller đụng cùng record)
      */
@@ -77,9 +102,9 @@ public class OutBoxSchedule {
         List<OutboxEvent> locked = new ArrayList<>();
         for (int i = 0; i < size; i++) {
             OutboxEvent e = mongoTemplate.findAndModify(
-                    new Query(Criteria.where("status").is("PENDING").and("eventType").is(eventType))
-                            .with(org.springframework.data.domain.Sort.by("createdAt").ascending()),
-                    new Update().set("status", "PROCESSING").set("lockedAt", Instant.now()),
+                    new Query(Criteria.where("status").is("PENDING").and("event_type").is(eventType))
+                            .with(org.springframework.data.domain.Sort.by("created_at").ascending()),
+                    new Update().set("status", "PROCESSING").set("locked_at", Instant.now()),
                     org.springframework.data.mongodb.core.FindAndModifyOptions.options().returnNew(true),
                     OutboxEvent.class);
             if (e == null)
@@ -92,7 +117,7 @@ public class OutBoxSchedule {
     private void markPublished(OutboxEvent event) {
         mongoTemplate.updateFirst(
                 new Query(Criteria.where("_id").is(event.getId())),
-                new Update().set("status", "PUBLISHED").set("publishedAt", Instant.now()),
+                new Update().set("status", "PUBLISHED").set("published_at", Instant.now()),
                 OutboxEvent.class);
     }
 

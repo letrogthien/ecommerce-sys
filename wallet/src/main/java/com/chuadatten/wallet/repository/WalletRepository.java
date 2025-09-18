@@ -1,5 +1,6 @@
 package com.chuadatten.wallet.repository;
 
+import com.chuadatten.wallet.common.Status;
 import com.chuadatten.wallet.entity.Wallet;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,9 +17,8 @@ public interface WalletRepository extends BaseRepository<Wallet> {
 
     List<Wallet> findByUserId(UUID userId);
 
-    @Query("SELECT w FROM Wallet w WHERE w.status = 1")
-    List<Wallet> findAllActive();
+    List<Wallet> findByStatus(Status status);
 
-    @Query("SELECT w FROM Wallet w WHERE w.userId = :userId AND w.status = 1")
-    List<Wallet> findActiveByUserId(@Param("userId") UUID userId);
+    List<Wallet> findByUserIdAndStatus(UUID userId, Status status);
+
 }

@@ -61,7 +61,7 @@ CREATE TABLE payments (
   currency CHAR(3) NOT NULL,
   status VARCHAR(30) NOT NULL , -- created/processing/succeeded/failed
   idempotency_key VARCHAR(255) DEFAULT NULL,
-  metadata JSON DEFAULT NULL,
+  metadata VARCHAR(50) DEFAULT NULL,
   txn_ref VARCHAR(255) DEFAULT NULL,
   created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),

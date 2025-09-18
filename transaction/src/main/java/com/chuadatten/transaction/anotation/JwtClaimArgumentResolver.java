@@ -1,6 +1,5 @@
 package com.chuadatten.transaction.anotation;
 
-
 import java.util.UUID;
 
 import com.chuadatten.transaction.exceptions.CustomException;
@@ -15,7 +14,6 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-
 @Component
 public class JwtClaimArgumentResolver implements HandlerMethodArgumentResolver {
 
@@ -23,7 +21,8 @@ public class JwtClaimArgumentResolver implements HandlerMethodArgumentResolver {
         return parameter.hasParameterAnnotation(JwtClaims.class);
     }
 
-    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
+            NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         JwtClaims jwtClaim = parameter.getParameterAnnotation(JwtClaims.class);
 
         assert jwtClaim != null;

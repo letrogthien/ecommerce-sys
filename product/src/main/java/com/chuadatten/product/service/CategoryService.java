@@ -29,6 +29,8 @@ public interface CategoryService {
      * @return an ApiResponse containing a list of child category DTOs
      */
     ApiResponse<List<CategoryDto>> getChildren(String parentId);
+
+    ApiResponse<List<CategoryDto>> getRoot();
     
 
 }
