@@ -20,6 +20,7 @@ import com.chuadatten.transaction.outbox.OutboxEvent;
 import com.chuadatten.transaction.outbox.OutboxRepository;
 import com.chuadatten.transaction.repository.OrderRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -68,40 +69,43 @@ public class EventListener {
     }
 
     @KafkaListener(topics = "payment.success", groupId = "transaction-group")
+    @Transactional
     public void listenPaymentSuccess(com.chuadatten.event.PaymentSuccessedEvent event) {
         UUID orderId = UUID.fromString(event.getOrderId());
-        orderRepository.findById(orderId).ifPresent(order -> {
-            order.setStatus(Status.PAID);
-            order.setPaymentStatus(Status.SUCCESS);
-            orderRepository.save(order);
+        // Sử dụng query với JOIN FETCH để load items cùng lúc
+        Order order = orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
 
-            // Create OrderSuccess event with product details
-            OrderSuccess orderSuccess = OrderSuccess.builder()
-                    .orderId(order.getId().toString())
-                    .sellerId(order.getSellerId().toString())
-                    .finalAmount(order.getTotalAmount())
-                    .currency(order.getCurrency())
-                    .products(order.getItems().stream()
-                            .map(item -> OrderSuccess.ProductQuantityUpdate.builder()
-                                    .productId(item.getProductId())
-                                    .productVariantId(item.getProductVariantId())
-                                    .quantity(item.getQuantity())
-                                    .pricePerUnit(item.getUnitPrice())
-                                    .subtotal(item.getSubtotal())
-                                    .build())
-                            .toList())
-                    .build();
+        order.setStatus(Status.PAID);
+        order.setPaymentStatus(Status.SUCCESS);
+        orderRepository.save(order);
 
-            OutboxEvent outboxEvent = OutboxEvent.builder()
-                    .eventType(KafkaTopic.ORDER_SUCCESS.name())
-                    .aggregateId(orderId.toString())
-                    .aggregateType(orderRepository.getClass().getName())
-                    .payload(jsonParserUtil.toJson(orderSuccess))
-                    .status("PENDING")
-                    .build();
+        // Bây giờ order.getItems() sẽ hoạt động vì đã được fetch
+        OrderSuccess orderSuccess = OrderSuccess.builder()
+                .orderId(order.getId().toString())
+                .sellerId(order.getSellerId().toString())
+                .finalAmount(order.getTotalAmount())
+                .currency(order.getCurrency())
+                .products(order.getItems().stream()
+                        .map(item -> OrderSuccess.ProductQuantityUpdate.builder()
+                                .productId(item.getProductId())
+                                .productVariantId(item.getProductVariantId())
+                                .quantity(item.getQuantity())
+                                .pricePerUnit(item.getUnitPrice())
+                                .subtotal(item.getSubtotal())
+                                .build())
+                        .toList())
+                .build();
 
-            outboxRepository.save(outboxEvent);
-        });
+        OutboxEvent outboxEvent = OutboxEvent.builder()
+                .eventType(KafkaTopic.ORDER_SUCCESS.name())
+                .aggregateId(orderId.toString())
+                .aggregateType(Order.class.getName())
+                .payload(jsonParserUtil.toJson(orderSuccess))
+                .status("PENDING")
+                .build();
+
+        outboxRepository.save(outboxEvent);
     }
 
     @KafkaListener(topics = "payment.payment.processing", groupId = "transaction-group")

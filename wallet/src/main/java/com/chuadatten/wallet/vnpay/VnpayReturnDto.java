@@ -5,10 +5,12 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.Builder;
 import lombok.Getter;
 
 
 @Getter
+@Builder
 public class VnpayReturnDto {
     @JsonProperty("vnp_Amount")
     private String amount;

@@ -50,6 +50,15 @@ public class OutBoxSchedule {
         pollAndPublish(KafkaTopic.PAYMENT_SUCCESS);
     }
 
+    @Scheduled(initialDelay = 5000, fixedDelay = 1000)
+    public void paymentCancelSuccessEvent() {
+        pollAndPublish(KafkaTopic.PAYMENT_CANCEL_SUCCESS);
+    }
+    @Scheduled(initialDelay = 5000, fixedDelay = 1000)
+    public void paymentCancelFailedEvent() {
+        pollAndPublish(KafkaTopic.PAYMENT_CANCEL_FAILED);
+    }
+
     private Object parserObject(KafkaTopic topic, String payload) {
         switch (topic) {
             case ORDER_CREATED:
@@ -68,6 +77,10 @@ public class OutBoxSchedule {
                 return jsonParserUtil.fromJson(payload, com.chuadatten.event.PayUrlEvent.class);
             case PAYMENT_SUCCESS:
                 return jsonParserUtil.fromJson(payload, com.chuadatten.event.PaymentSuccessedEvent.class);
+            case PAYMENT_CANCEL_SUCCESS:
+                return jsonParserUtil.fromJson(payload, com.chuadatten.event.PaymentCancelEvent.class);
+            case PAYMENT_CANCEL_FAILED:
+                return jsonParserUtil.fromJson(payload, com.chuadatten.event.PaymentCancelEvent.class);
             default:
                 return jsonParserUtil.fromJson(payload, Object.class);
         }

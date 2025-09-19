@@ -94,4 +94,15 @@ public interface ProductService {
 
 
     ApiResponse<List<ProductDto>> getAll();
+
+    /**
+     * Retrieves all products with pagination support.
+     * 
+     * @param page the page number to retrieve (0-based)
+     * @param size the number of items per page
+     * @param sortBy the field to sort by
+     * @param sortDirection the sort direction (asc or desc)
+     * @return an ApiResponse containing a page of product DTOs
+     */
+    ApiResponse<Page<ProductDto>> getAllProducts(int page, int size, String sortBy, String sortDirection);
 }

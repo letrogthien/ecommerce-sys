@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.chuadatten.event.PayUrlEvent;
 import com.chuadatten.event.PaymentProcessEvent;
 import com.chuadatten.event.PaymentSuccessedEvent;
 import com.chuadatten.wallet.common.JsonParserUtil;
@@ -34,6 +35,7 @@ import com.chuadatten.wallet.repository.WalletRepository;
 import com.chuadatten.wallet.repository.WalletReservationRepository;
 import com.chuadatten.wallet.responses.ApiResponse;
 import com.chuadatten.wallet.service.PaymentService;
+import com.chuadatten.wallet.vnpay.IPNReturn;
 import com.chuadatten.wallet.vnpay.VnpayReturnDto;
 import com.chuadatten.wallet.vnpay.VnpayUltils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -61,7 +63,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment pay = paymentRepository.findById(paymentId).orElseThrow(
                 () -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
-        if (!userId.equals(pay.getUserId()) ) {
+        if (!userId.equals(pay.getUserId())) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
         if (!pay.getStatus().equals(Status.CREATED)) {
@@ -114,7 +116,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             case FAILED:
                 throw new CustomException(ErrorCode.PAYMENT_FAILED);
-            case CANCLED:
+            case CANCELED:
                 throw new CustomException(ErrorCode.PAYMENT_CANCELED);
             case REFUNDED:
                 throw new CustomException(ErrorCode.PAYMENT_REFUNDED);
@@ -125,8 +127,52 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public ApiResponse<String> retryPayment(UUID paymentId) {
-        throw new UnsupportedOperationException("Unimplemented method 'retryPayment'");
+    public ApiResponse<String> retryPayment(UUID paymentId, String ip)
+            throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
+
+        if (!payment.getStatus().equals(Status.PROCESSING)) {
+            throw new CustomException(ErrorCode.PAYMENT_NOT_IN_PROCESSING);
+        }
+        List<PaymentAttempt> attempts = paymentAttemptRepository.findAllByPaymentIdAndExpiredAtAfter(paymentId,
+                java.time.LocalDateTime.now());
+        if (!attempts.isEmpty()) {
+            PaymentAttempt lastAttempt = attempts.getFirst();
+            PayUrlEvent payUrlEvent = PayUrlEvent.builder()
+                .orderId(payment.getOrderId().toString())
+                .paymentId(payment.getId().toString())
+                .payUrl(lastAttempt.getAttemptData())
+                .userId(payment.getUserId().toString())
+                .build();
+
+        OutboxEvent outboxEvent = OutboxEvent.builder()
+                .eventType(KafkaTopic.PAYMENT_URL_SUCCESS.name())
+                .payload(jsonParserUtil.toJson(payUrlEvent))
+                .aggregateId(payment.getId().toString())
+                .aggregateType("PAYMENT")
+                .status("PENDING")
+                .build();
+        outboxRepository.save(outboxEvent);
+
+            return ApiResponse.<String>builder()
+                    .data("Payment is processing, please wait")
+                    .build();
+
+        }
+        OutboxEvent outboxEvent = OutboxEvent.builder()
+                .aggregateId(paymentId.toString())
+                .aggregateType("PAYMENT")
+                .attempts(0)
+                .eventType(KafkaTopic.PAYMENT_PROCECSSING.name())
+                .payload(jsonParserUtil.toJson(PaymentProcessEvent.builder().orderId(payment.getOrderId().toString())
+                        .paymentId(payment.getId().toString()).ip(ip).paymentMethod(PaymentMethod.DIRECT.name()).build()))
+                .build();
+        outboxRepository.save(outboxEvent);
+        return ApiResponse.<String>builder()
+                .data("Payment is processing, please wait")
+                .build();
+
     }
 
     @Override
@@ -169,18 +215,35 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public ApiResponse<PaymentDto> handleProviderCallback(VnpayReturnDto returnDto)
+    public IPNReturn handleProviderCallback(VnpayReturnDto returnDto)
             throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException {
 
-        vnpayUltils.checkCallBack(returnDto);
+        if (returnDto.getResponseCode() == null || !"00".equals(returnDto.getResponseCode())) {
+            throw new CustomException(ErrorCode.PAYMENT_FAILED);
 
-        Payment payment = paymentRepository.findByTxnRef(returnDto.getTxnRef())
+        }
+        String id = returnDto.getTxnRef().substring(0, returnDto.getTxnRef().length() - 13);
+
+        Payment payment = paymentRepository.findById(UUID.fromString(
+                id))
                 .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
         payment.setStatus(Status.SUCCEEDED);
 
-        PaymentAttempt paymentAttempt = paymentAttemptRepository.findByPaymentId(payment.getId());
+        List<PaymentAttempt> attempts = paymentAttemptRepository.findAllByPaymentId(payment.getId());
+        for (PaymentAttempt attempt : attempts) {
+            if (attempt.getStatus() == Status.SUCCEEDED) {
+                return IPNReturn.builder()
+                    .rspCode("00")
+                    .message("Success")
+                    .build();
+            }
+        }
+
+
+        PaymentAttempt paymentAttempt = new PaymentAttempt();
         ObjectMapper mapper = new ObjectMapper();
         paymentAttempt.setProviderResponse(mapper.writeValueAsString(returnDto));
+        paymentAttempt.setPaymentId(payment.getId());
         paymentAttempt.setStatus(Status.SUCCEEDED);
 
         PaymentSuccessedEvent paymentSuccessedEvent = PaymentSuccessedEvent.builder()
@@ -199,10 +262,11 @@ public class PaymentServiceImpl implements PaymentService {
         outboxRepository.save(outboxEvent);
         paymentRepository.save(payment);
         paymentAttemptRepository.save(paymentAttempt);
-
-        return ApiResponse.<PaymentDto>builder()
-                .data(paymentMapper.toDto(payment))
+        return IPNReturn.builder()
+                .rspCode("01")
+                .message("Success")
                 .build();
+        
 
     }
 

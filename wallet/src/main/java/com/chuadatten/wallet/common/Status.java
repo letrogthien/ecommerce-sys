@@ -22,8 +22,8 @@ public enum Status {
     PROCESSING,
     SUCCEEDED,
     FAILED,
-    CANCLED,
-    REFUNDED, COMPLETED,
+    
+    REFUNDED, COMPLETED, CANCELED,
     
     ;
 

@@ -131,7 +131,6 @@ public class AuthServiceImpl implements AuthService {
         newPasswordHistory.setCurrentIndex(0);
         this.passwordHistoryRepository.save(newPasswordHistory);
 
-
         Preference preference = Preference.builder()
                 .user(savedUserInf)
                 .notificationEmail(false)
@@ -233,18 +232,20 @@ public class AuthServiceImpl implements AuthService {
         String jti = this.jwtUtils.extractClaim(refreshToken, "jti");
         this.whiteListCacheService.saveToCache(new WhiteList(jti, user.getId()));
 
-        Cookie cookie = new Cookie("access_token", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false);
-        cookie.setPath("/");
-        cookie.setMaxAge(3600000);
-        response.addCookie(cookie);
+        Cookie accessTokenCookie = new Cookie("access_token", token);
+        accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setSecure(true);
+        accessTokenCookie.setDomain("wezd.io.vn");
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(60 * 60); 
+        response.addCookie(accessTokenCookie);
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(false);
+        refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setDomain("wezd.io.vn");
         refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(604800000);
+        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); 
         response.addCookie(refreshTokenCookie);
         return ApiResponse.<LoginResponse>builder()
                 .message("Login successful")
@@ -332,19 +333,14 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         String token = this.jwtUtils.generateToken(user);
 
-        Cookie cookie = new Cookie("access_token", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false);
-        cookie.setPath("/");
-        cookie.setMaxAge(3600000);
-        response.addCookie(cookie);
+        Cookie accessTokenCookie = new Cookie("access_token", token);
+        accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setSecure(true);
+        accessTokenCookie.setDomain("wezd.io.vn");
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(60 * 60); 
+        response.addCookie(accessTokenCookie);
 
-        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(false);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(604800000);
-        response.addCookie(refreshTokenCookie);
         return ApiResponse.<String>builder()
                 .message("Access token generated successfully")
                 .data("token in cookie")
@@ -434,8 +430,6 @@ public class AuthServiceImpl implements AuthService {
                 .message("Two-factor authentication enabled successfully")
                 .build();
     }
-
-    
 
     @Override
     @CusAuditable(action = "Disable 2FA", description = "UserAuth disables two-factor authentication")
@@ -635,7 +629,6 @@ public class AuthServiceImpl implements AuthService {
         this.otpModelCacheService.saveOtpModel(otpModel);
         OtpEvent otpEvent = OtpEvent.builder().email(user.getEmail()).otp(otpModel.getOtp()).build();
         this.eventProducer.sendOtp(otpEvent);
-
 
         return ApiResponse.<String>builder()
                 .message("OTP sent to your email")

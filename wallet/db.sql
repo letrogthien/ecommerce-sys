@@ -76,10 +76,11 @@ CREATE TABLE payments (
 CREATE TABLE payment_attempts (
   id BINARY(16) NOT NULL PRIMARY KEY,
   payment_id BINARY(16) NOT NULL,
-  attempt_data JSON,
+  attempt_data VARCHAR(2000) DEFAULT NULL, -- e.g. payment URL
   provider_response JSON,
   status VARCHAR(30),
   created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  expired_at TIMESTAMP(6) DEFAULT NULL,
   KEY idx_payment (payment_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
