@@ -49,7 +49,10 @@ public class OrderRefund {
 
     @Column(columnDefinition = "TEXT")
     private String reason;
-
+    
+    // Virtual fields for admin notes and updates (managed in application layer)
+    // These will be stored as part of reason or separate logging
+    
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

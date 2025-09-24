@@ -1,9 +1,11 @@
 package com.chuadatten.product.service.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -164,8 +166,9 @@ public class ProductServiceImpl implements ProductService {
                 .productId(productId)
                 .url(url)
                 .build();
-        List<ProductImage> pImage = product.getImages();
+        List<ProductImage> pImage = product.getImages() != null ? product.getImages() : new ArrayList<>();
         pImage.add(productImage);
+        product.setImages(pImage);
         productRepository.save(product);
 
         return ApiResponse.<ProductDto>builder()
@@ -188,12 +191,22 @@ public class ProductServiceImpl implements ProductService {
             sortDirection.equalsIgnoreCase("desc") ? 
             org.springframework.data.domain.Sort.by(sortBy).descending() : 
             org.springframework.data.domain.Sort.by(sortBy).ascending());
-        
-        Page<Product> products = productRepository.findAll(pageable);
+
+        Page<Product> products = productRepository.findAllByActive(Status.ACTIVE, pageable);
         Page<ProductDto> productDtos = products.map(productMapper::toDto);
         
         return ApiResponse.<Page<ProductDto>>builder()
                 .data(productDtos)
+                .build();
+    }
+
+    @Override
+    public ApiResponse<Page<ProductDto>> getBySeller(UUID sellerId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProductDto> products = productRepository.findAllByUserId(sellerId.toString(), pageable)
+                .map(productMapper::toDto);
+        return ApiResponse.<Page<ProductDto>>builder()
+                .data(products)
                 .build();
     }
 

@@ -46,6 +46,17 @@ public interface TransactionMapper {
     List<OrderProofDto> toOrderProofDtoList(List<OrderProof> orderProofs);
 
     @Mapping(target = "orderId", source = "order.id")
+    @Mapping(target = "amount", source = "order.totalAmount")
+    @Mapping(target = "currency", source = "order.currency")
+    @Mapping(target = "adminNote", ignore = true) // Managed in service layer
+    @Mapping(target = "updatedAt", ignore = true) // Managed in service layer  
+    @Mapping(target = "updatedBy", ignore = true) // Managed in service layer
+    @Mapping(target = "order.totalAmount", source = "order.totalAmount")
+    @Mapping(target = "order.currency", source = "order.currency")
+    @Mapping(target = "order.buyerId", source = "order.buyerId")
+    @Mapping(target = "order.sellerId", source = "order.sellerId")
+    @Mapping(target = "order.orderStatus", source = "order.status")
+    @Mapping(target = "order.orderCreatedAt", source = "order.createdAt")
     OrderRefundDto toOrderRefundDto(OrderRefund orderRefund);
 
 

@@ -1,0 +1,34 @@
+package com.chuadatten.notify;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .cors(cors -> cors
+                        .configurationSource(request -> {
+                            org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+                            config.setAllowedOrigins(java.util.List.of("https://wezd.io.vn", "https://admin.wezd.io.vn",
+                                    "https://product.wezd.io.vn"));
+                            config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                            config.setAllowedHeaders(java.util.List.of("*"));
+                            config.setAllowCredentials(true);
+                            return config;
+                        }))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/ws/**", "/actuator/**").permitAll() // cho phép socket connect
+                        .anyRequest().authenticated())
+                .httpBasic(basic -> basic.disable())
+                .formLogin(login -> login.disable());
+
+        return http.build();
+    }
+}

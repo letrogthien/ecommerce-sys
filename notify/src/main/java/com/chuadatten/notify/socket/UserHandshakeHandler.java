@@ -15,7 +15,8 @@ public class UserHandshakeHandler extends DefaultHandshakeHandler {
     protected Principal determineUser(ServerHttpRequest request,
                                       WebSocketHandler wsHandler,
                                       Map<String, Object> attributes) {
-        String userId = (String) attributes.get("id");
+        String userId = (String) attributes.get("userId");
+        System.out.println("User ID: " + userId);
         return () -> userId; 
     }
 }

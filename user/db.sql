@@ -217,10 +217,10 @@ CREATE TABLE user_verifications
     id                  binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid())) PRIMARY KEY, -- UUID
     user_id             binary(16) DEFAULT (uuid_to_bin(uuid())) NOT NULL,
     verification_status VARCHAR(20) NOT NULL,
-    face_id_url   VARCHAR(255),            -- Link to secure storage
+    face_id_url   TEXT,            -- Link to secure storage
 
-    document_front_url  VARCHAR(255),
-    document_back_url   VARCHAR(255),            -- Link to secure storage
+    document_front_url  TEXT,
+    document_back_url   TEXT,            -- Link to secure storage
     version             INT,                     -- Versioning for KYC documents
     verified_at         TIMESTAMP NULL,
     created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

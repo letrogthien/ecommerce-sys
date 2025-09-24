@@ -1,0 +1,315 @@
+=================================================================
+           HƯỚNG DẪN BACKEND - CÁC API REFUND CẦN BỔ SUNG
+=================================================================
+
+
+✅ BẢNG order_refunds (HIỆN TẠI):
+   - id: BINARY(16) 
+   - order_id: BINARY(16)
+   - request_by: BINARY(16)
+   - status: VARCHAR(50) 
+   - reason: TEXT
+   - created_at: DATETIME
+   - completed_at: DATETIME
+
+✅ THÔNG TIN BỔ SUNG LẤY TỪ JOIN orders:
+   - amount: orders.total_amount
+   - currency: orders.currency  
+   - buyerId: orders.buyer_id
+   - sellerId: orders.seller_id
+   - orderStatus: orders.status
+
+💡 STRATEGY: Sử dụng JOIN queries và business logic trong application layer
+
+=================================================================
+                        � SQL PATTERNS VỚI SCHEMA HIỆN TẠI
+=================================================================
+
+1. BẢNG order_refunds - CẬP NHẬT SCHEMA (TÙY CHỌN):
+
+   -- AMOUNT có thể lấy từ orders.total_amount, không cần thêm cột riêng
+
+
+
+
+=================================================================
+                     🔧 MISSING APIs CẦN IMPLEMENT
+=================================================================
+
+1. SELLER REFUND MANAGEMENT APIs (PRIORITY: HIGH)
+   ---------------------------------------------
+
+   a) GET /api/v1/transaction-service/refunds/seller/{sellerId}
+      📝 Mô tả: Lấy danh sách refunds mà seller cần xử lý
+      📊 Parameters:
+         - sellerId (path): UUID của seller
+         - status (query, optional): PENDING, APPROVED, REJECTED, etc.
+         - page (query, optional): số trang (default: 0)
+         - limit (query, optional): số items per page (default: 10)
+      
+      🔍 SQL Query Logic:
+         SELECT r.*, 
+                o.total_amount, 
+                o.currency, 
+                o.buyer_id,
+                o.seller_id,
+                o.status as order_status,
+                o.created_at as order_created_at
+         FROM order_refunds r
+         JOIN orders o ON r.order_id = o.id
+         WHERE o.seller_id = ?
+         [AND r.status = ?]
+         ORDER BY r.created_at DESC
+         LIMIT ? OFFSET ?
+         
+      💡 Lưu ý: amount = o.total_amount (lấy từ bảng orders)
+      
+      📤 Response: ApiResponsePageOrderRefundDto
+
+   b) PUT /api/v1/transaction-service/refunds/{refundId}/approve
+      📝 Mô tả: Seller approve refund request
+      📊 Request Body:
+         {
+           "sellerId": "uuid",
+           "note": "optional seller note"
+         }
+      
+      🔍 Business Logic:
+         1. Validate: refund belongs to seller's order
+         2. Validate: current status = PENDING
+         3. Update status = APPROVED
+         4. Set updated_at, updated_by
+         5. Log status change in refund_logs
+         6. Trigger payment processing (if auto)
+      
+      📤 Response: ApiResponseOrderRefundDto
+
+   c) PUT /api/v1/transaction-service/refunds/{refundId}/reject
+      📝 Mô tả: Seller reject refund request
+      📊 Request Body:
+         {
+           "sellerId": "uuid",
+           "reason": "lý do từ chối (required)"
+         }
+      
+      🔍 Business Logic:
+         1. Validate: refund belongs to seller's order
+         2. Validate: current status = PENDING
+         3. Update status = REJECTED
+         4. Set admin_note = reason
+         5. Set updated_at, updated_by
+         6. Log status change
+      
+      📤 Response: ApiResponseOrderRefundDto
+
+2. REFUND STATUS MANAGEMENT APIs (PRIORITY: HIGH)
+   -----------------------------------------------
+
+   a) PUT /api/v1/transaction-service/refunds/{refundId}/status
+      📝 Mô tả: Cập nhật trạng thái refund (admin/system)
+      📊 Request Body:
+         {
+           "status": "PENDING|APPROVED|REJECTED|PROCESSING|COMPLETED|FAILED",
+           "updatedBy": "uuid",
+           "note": "optional note"
+         }
+      
+      🔍 Valid Status Transitions:
+         PENDING -> APPROVED, REJECTED
+         APPROVED -> PROCESSING, FAILED
+         PROCESSING -> COMPLETED, FAILED
+         REJECTED -> (no further changes)
+         COMPLETED -> (no further changes)
+      
+      📤 Response: ApiResponseOrderRefundDto
+
+   b) POST /api/v1/transaction-service/refunds/{refundId}/process-payment
+      📝 Mô tả: Xử lý thanh toán refund (integration với payment gateway)
+      📊 Request Body:
+         {
+           "adminId": "uuid",
+           "paymentMethod": "WALLET|BANK_TRANSFER|ORIGINAL_METHOD",
+           "note": "optional"
+         }
+      
+      🔍 Business Logic:
+         1. Validate: status = APPROVED
+         2. Update status = PROCESSING
+         3. Call payment gateway API
+         4. Update status based on payment result
+         5. Log all steps
+      
+      📤 Response: ApiResponseOrderRefundDto
+
+3. ADMIN REFUND MANAGEMENT APIs (PRIORITY: MEDIUM)
+   ------------------------------------------------
+
+   a) PUT /api/v1/transaction-service/admin/refunds/{refundId}/approve
+      📝 Mô tả: Admin force approve refund
+      📊 Request Body:
+         {
+           "adminId": "uuid",
+           "note": "admin approval note"
+         }
+      
+      🔍 Business Logic:
+         1. Admin can approve any refund (bypass seller)
+         2. Update status = APPROVED
+         3. Log admin action
+         4. Optional: auto-process payment
+      
+      📤 Response: ApiResponseOrderRefundDto
+
+   b) PUT /api/v1/transaction-service/admin/refunds/{refundId}/reject
+      📝 Mô tả: Admin reject refund
+      📊 Request Body:
+         {
+           "adminId": "uuid",
+           "reason": "admin rejection reason"
+         }
+      
+      📤 Response: ApiResponseOrderRefundDto
+
+   c) PUT /api/v1/transaction-service/admin/refunds/{refundId}/force-complete
+      📝 Mô tả: Admin force complete refund (manual completion)
+      📊 Request Body:
+         {
+           "adminId": "uuid",
+           "note": "manual completion note"
+         }
+      
+      🔍 Business Logic:
+         1. Can complete from any status
+         2. Set status = COMPLETED
+         3. Set completed_at = NOW()
+         4. Log admin action
+      
+      📤 Response: ApiResponseOrderRefundDto
+
+4. ANALYTICS & REPORTING APIs (PRIORITY: LOW)
+   -------------------------------------------
+
+   a) GET /api/v1/transaction-service/analytics/seller/{sellerId}/refunds
+      📝 Mô tả: Thống kê refunds cho seller
+      📊 Parameters:
+         - period (query): 7d, 30d, 90d (default: 30d)
+      
+      📤 Response:
+         {
+           "totalRefunds": 25,
+           "pendingRefunds": 5,
+           "approvedRefunds": 15,
+           "rejectedRefunds": 5,
+           "totalRefundAmount": 1500000,
+           "averageProcessingTime": 2.5, // days
+           "refundRate": 12.5 // percentage
+         }
+
+   b) GET /api/v1/transaction-service/analytics/refunds/overview
+      📝 Mô tả: Tổng quan refunds cho admin
+      📊 Parameters:
+         - startDate, endDate (query, optional)
+      
+      📤 Response:
+         {
+           "totalRefunds": 250,
+           "totalRefundAmount": 15000000,
+           "statusDistribution": {
+             "PENDING": 50,
+             "APPROVED": 150,
+             "REJECTED": 30,
+             "COMPLETED": 20
+           },
+           "topReasons": [
+             {"reason": "Sản phẩm không đúng mô tả", "count": 45},
+             {"reason": "Giao hàng chậm", "count": 30}
+           ]
+         }
+
+=================================================================
+                        📝 REQUEST/RESPONSE MODELS
+=================================================================
+
+1. ORDER REFUND DTO (với thông tin từ JOIN orders):
+
+   {
+     "id": "uuid",
+     "orderId": "uuid",
+     "requestBy": "uuid",
+     "amount": 150000.00,        // ← Lấy từ orders.total_amount
+     "currency": "VND",          // ← Lấy từ orders.currency
+     "status": "PENDING",
+     "reason": "Sản phẩm lỗi",
+     "adminNote": "Approved",    // ← Cần thêm vào DB
+     "createdAt": "2025-09-23T10:00:00Z",
+     "completedAt": null,
+     "updatedAt": "2025-09-23T10:30:00Z",  // ← Cần thêm vào DB
+     "updatedBy": "uuid",        // ← Cần thêm vào DB
+     
+     // Thông tin từ bảng orders (qua JOIN)
+     "order": {
+       "totalAmount": 150000.00,
+       "currency": "VND", 
+       "buyerId": "uuid",
+       "sellerId": "uuid",
+       "orderStatus": "COMPLETED",
+       "orderCreatedAt": "2025-09-20T10:00:00Z"
+     }
+   }
+
+2. REFUND STATUS VALUES:
+
+   - REQUESTED (initial)
+   - PENDING (seller review needed)
+   - APPROVED (seller approved)
+   - REJECTED (seller/admin rejected)
+   - PROCESSING (payment processing)
+   - COMPLETED (refund completed)
+   - FAILED (payment failed)
+   - CANCELLED (cancelled by buyer)
+
+=================================================================
+                        🔄 BUSINESS WORKFLOW
+=================================================================
+
+1. BUYER tạo refund request:
+   POST /api/v1/transaction-service/refunds
+   Status: REQUESTED → PENDING
+
+2. SELLER xem và xử lý:
+   GET /api/v1/transaction-service/refunds/seller/{sellerId}
+   PUT /api/v1/transaction-service/refunds/{id}/approve|reject
+   Status: PENDING → APPROVED/REJECTED
+
+3. SYSTEM xử lý payment (nếu approved):
+   POST /api/v1/transaction-service/refunds/{id}/process-payment
+   Status: APPROVED → PROCESSING → COMPLETED/FAILED
+
+4. ADMIN có thể can thiệp bất kỳ lúc nào:
+   PUT /api/v1/transaction-service/admin/refunds/{id}/approve
+   PUT /api/v1/transaction-service/admin/refunds/{id}/force-complete
+
+=================================================================
+                        🚨 IMPORTANT NOTES
+=================================================================
+
+1. VALIDATION:
+   - Kiểm tra quyền: seller chỉ được xử lý refunds của orders thuộc về mình
+   - Kiểm tra trạng thái: chỉ cho phép transitions hợp lệ
+   - Kiểm tra thời gian: có thể set timeout cho refund requests
+
+2. SECURITY:
+   - Log tất cả actions trong refund_logs table
+   - Validate UUID formats
+   - Rate limiting cho APIs
+
+3. PERFORMANCE:
+   - Sử dụng indexes đã đề xuất
+   - Implement pagination cho tất cả list APIs
+   - Cache frequently accessed data
+
+4. INTEGRATION:
+   - Payment gateway integration cho process-payment API
+   - Email/notification service integration
+   - Webhook support cho status updates
+

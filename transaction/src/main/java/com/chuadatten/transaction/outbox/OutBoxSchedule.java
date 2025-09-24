@@ -83,6 +83,8 @@ public class OutBoxSchedule {
                 return jsonParserUtil.fromJson(payload, OrderSuccess.class);
             case ORDER_CANCEL:
                 return jsonParserUtil.fromJson(payload, OrderCancel.class);
+            case CLEAN_UP_ORDER:
+                return jsonParserUtil.fromJson(payload, OrderCancel.class);
             default:
                 return jsonParserUtil.fromJson(payload, Object.class);
         }

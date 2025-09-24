@@ -59,6 +59,13 @@ public class AuthController {
         return ResponseEntity.ok(authService.register(registerRequest));
     }
 
+    @PostMapping("/register/role")
+    public ResponseEntity<Object> registerWithRole(@RequestParam UUID userId, @RequestParam RoleName roleName) {
+        return ResponseEntity.ok(authService.registerWithRole(userId, roleName));
+    }
+
+    
+
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         return ResponseEntity.ok(authService.login(loginRequest, response));

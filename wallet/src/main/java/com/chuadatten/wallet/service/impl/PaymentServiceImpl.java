@@ -15,6 +15,7 @@ import com.chuadatten.event.PaymentProcessEvent;
 import com.chuadatten.event.PaymentSuccessedEvent;
 import com.chuadatten.wallet.common.JsonParserUtil;
 import com.chuadatten.wallet.common.PaymentMethod;
+import com.chuadatten.wallet.common.PaymentType;
 import com.chuadatten.wallet.common.Status;
 import com.chuadatten.wallet.dto.PaymentAttemptDto;
 import com.chuadatten.wallet.dto.PaymentDto;
@@ -140,20 +141,20 @@ public class PaymentServiceImpl implements PaymentService {
         if (!attempts.isEmpty()) {
             PaymentAttempt lastAttempt = attempts.getFirst();
             PayUrlEvent payUrlEvent = PayUrlEvent.builder()
-                .orderId(payment.getOrderId().toString())
-                .paymentId(payment.getId().toString())
-                .payUrl(lastAttempt.getAttemptData())
-                .userId(payment.getUserId().toString())
-                .build();
+                    .orderId(payment.getOrderId().toString())
+                    .paymentId(payment.getId().toString())
+                    .payUrl(lastAttempt.getAttemptData())
+                    .userId(payment.getUserId().toString())
+                    .build();
 
-        OutboxEvent outboxEvent = OutboxEvent.builder()
-                .eventType(KafkaTopic.PAYMENT_URL_SUCCESS.name())
-                .payload(jsonParserUtil.toJson(payUrlEvent))
-                .aggregateId(payment.getId().toString())
-                .aggregateType("PAYMENT")
-                .status("PENDING")
-                .build();
-        outboxRepository.save(outboxEvent);
+            OutboxEvent outboxEvent = OutboxEvent.builder()
+                    .eventType(KafkaTopic.PAYMENT_URL_SUCCESS.name())
+                    .payload(jsonParserUtil.toJson(payUrlEvent))
+                    .aggregateId(payment.getId().toString())
+                    .aggregateType("PAYMENT")
+                    .status("PENDING")
+                    .build();
+            outboxRepository.save(outboxEvent);
 
             return ApiResponse.<String>builder()
                     .data("Payment is processing, please wait")
@@ -166,7 +167,8 @@ public class PaymentServiceImpl implements PaymentService {
                 .attempts(0)
                 .eventType(KafkaTopic.PAYMENT_PROCECSSING.name())
                 .payload(jsonParserUtil.toJson(PaymentProcessEvent.builder().orderId(payment.getOrderId().toString())
-                        .paymentId(payment.getId().toString()).ip(ip).paymentMethod(PaymentMethod.DIRECT.name()).build()))
+                        .paymentId(payment.getId().toString()).ip(ip).paymentMethod(PaymentMethod.DIRECT.name())
+                        .build()))
                 .build();
         outboxRepository.save(outboxEvent);
         return ApiResponse.<String>builder()
@@ -233,12 +235,11 @@ public class PaymentServiceImpl implements PaymentService {
         for (PaymentAttempt attempt : attempts) {
             if (attempt.getStatus() == Status.SUCCEEDED) {
                 return IPNReturn.builder()
-                    .rspCode("00")
-                    .message("Success")
-                    .build();
+                        .rspCode("00")
+                        .message("Success")
+                        .build();
             }
         }
-
 
         PaymentAttempt paymentAttempt = new PaymentAttempt();
         ObjectMapper mapper = new ObjectMapper();
@@ -263,10 +264,9 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.save(payment);
         paymentAttemptRepository.save(paymentAttempt);
         return IPNReturn.builder()
-                .rspCode("01")
+                .rspCode("00")
                 .message("Success")
                 .build();
-        
 
     }
 
@@ -287,6 +287,32 @@ public class PaymentServiceImpl implements PaymentService {
         return ApiResponse.<PaymentAttemptDto>builder()
                 .data(paymentAttemptMapper.toDto(paymentAttempt))
                 .build();
+    }
+
+    @Override
+    public ApiResponse<Void> depositWallet(UUID userId, double amount, String ip) throws InvalidKeyException, NoSuchAlgorithmException {
+        Payment payment = Payment.builder()
+                .userId(userId)
+                .paymentMethod(PaymentMethod.DIRECT)
+                .amount(java.math.BigInteger.valueOf((long) (amount * 100))) // Convert to cents
+                .currency("USD")
+                .type(PaymentType.WALLET_DEPOSIT)
+                .status(Status.CREATED)
+                .build();
+        paymentRepository.save(payment);
+        String payUrl =vnpayUltils.payUrl(ip,payment.getAmount(),payment.getId().toString(), payment.getId().toString());
+        PaymentAttempt paymentAttempt = PaymentAttempt.builder()
+                .paymentId(payment.getId())
+                .status(Status.CREATED)
+                .attemptData(payUrl)
+                .build();
+
+        paymentAttemptRepository.save(paymentAttempt);
+        return ApiResponse.<Void>builder()
+                .message("Wallet deposit initiated")
+                .build();
+
+        
     }
 
 }

@@ -1,6 +1,14 @@
 package com.chuadatten.user.controller;
 
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,11 +35,18 @@ public class KycController {
 
     /**
      * Submit verification request
+     * @throws IOException 
+     * @throws BadPaddingException 
+     * @throws IllegalBlockSizeException 
+     * @throws InvalidAlgorithmParameterException 
+     * @throws NoSuchPaddingException 
+     * @throws NoSuchAlgorithmException 
+     * @throws InvalidKeyException 
      */
     @PostMapping(value = "/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<UserVerificationDto> submitVerificationRequest(
             @Parameter(hidden = true) @JwtClaims("id") UUID userId,
-            @ModelAttribute UserVerificationRequest request) {
+            @ModelAttribute UserVerificationRequest request) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
         return kycService.submitVerificationRequest(request, userId);
     }
 

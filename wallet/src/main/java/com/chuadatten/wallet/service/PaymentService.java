@@ -100,4 +100,6 @@ public interface PaymentService {
      * @return ApiResponse containing list of payment attempts
      */
     ApiResponse<PaymentAttemptDto> getPaymentAttempts(UUID paymentId);
+
+    ApiResponse<Void> depositWallet(UUID userId, double amount, String ip) throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException;
 }

@@ -37,9 +37,13 @@ public class Security {
         http.authorizeHttpRequests(auth -> auth
             // --- Public ---
             
-
+            .requestMatchers("/swagger-ui/**").permitAll()
+            .requestMatchers("/v3/api-docs/**").permitAll()
             // --- ADMIN ---
             .requestMatchers("/api/v1/transaction-service/admin/**").hasAuthority(RoleName.ROLE_ADMIN.name())
+
+            // --- ANALYTICS (Seller, Admin) ---
+            .requestMatchers("/api/v1/transaction-service/analytics/**").hasAnyAuthority(RoleName.ROLE_SELLER.name(), RoleName.ROLE_ADMIN.name())
 
             // --- USER (Buyer) ---
             .requestMatchers(HttpMethod.POST, "/api/v1/transaction-service/orders").hasAuthority(RoleName.ROLE_USER.name())
@@ -47,10 +51,19 @@ public class Security {
             .requestMatchers(HttpMethod.PUT, "/api/v1/transaction-service/orders/*/cancel").hasAuthority(RoleName.ROLE_USER.name())
             .requestMatchers(HttpMethod.POST, "/api/v1/transaction-service/refunds").hasAuthority(RoleName.ROLE_USER.name())
             .requestMatchers(HttpMethod.GET, "/api/v1/transaction-service/refunds/order/*").hasAuthority(RoleName.ROLE_USER.name())
+            .requestMatchers(HttpMethod.GET, "/api/v1/transaction-service/refunds/buyer").hasAuthority(RoleName.ROLE_USER.name())
 
             // --- SELLER ---
             .requestMatchers(HttpMethod.GET, "/api/v1/transaction-service/orders/seller").hasAuthority(RoleName.ROLE_SELLER.name())
             .requestMatchers(HttpMethod.POST, "/api/v1/transaction-service/orders/*/proof").hasAuthority(RoleName.ROLE_SELLER.name())
+            .requestMatchers("/api/v1/transaction-service/refunds/seller/**").hasAnyAuthority(RoleName.ROLE_SELLER.name(), RoleName.ROLE_ADMIN.name())
+            
+            // --- SELLER REFUND MANAGEMENT ---
+            .requestMatchers(HttpMethod.GET, "/api/v1/transaction-service/refunds/seller/*").hasAnyAuthority(RoleName.ROLE_SELLER.name(), RoleName.ROLE_ADMIN.name())
+            .requestMatchers(HttpMethod.PUT, "/api/v1/transaction-service/refunds/*/approve").hasAnyAuthority(RoleName.ROLE_SELLER.name(), RoleName.ROLE_ADMIN.name())
+            .requestMatchers(HttpMethod.PUT, "/api/v1/transaction-service/refunds/*/reject").hasAnyAuthority(RoleName.ROLE_SELLER.name(), RoleName.ROLE_ADMIN.name())
+            .requestMatchers(HttpMethod.PUT, "/api/v1/transaction-service/refunds/*/status").hasAuthority(RoleName.ROLE_ADMIN.name())
+            .requestMatchers(HttpMethod.POST, "/api/v1/transaction-service/refunds/*/process-payment").hasAuthority(RoleName.ROLE_ADMIN.name())
 
             // --- USER OR SELLER ---
             .requestMatchers(HttpMethod.GET, "/api/v1/transaction-service/orders/*").hasAnyAuthority(RoleName.ROLE_USER.name(), RoleName.ROLE_SELLER.name())

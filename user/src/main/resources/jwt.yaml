@@ -16,3 +16,6 @@ security:
       password_reset_token:
         secret: VhxgkvnS2x4wHHS4XKzUTTlG0IdlTydjtOn+qAitgHE=
         expiration: 3600000
+    aes:
+      key: rzPYmltYy4BcNthFBcnlwSiR+FXz6BY9STyHGCmCsPo=
+      iv: sQ10AVvSgQRGOiHHq5uemQ==

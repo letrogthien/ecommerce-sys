@@ -179,7 +179,7 @@ public class OrderServiceImpl implements OrderService {
                         MultipartFile file, UUID sellerId) {
                 Order order = orderRepository.findById(orderId)
                                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
-                if (!order.getStatus().equals(Status.APPROVED)) {
+                if (!order.getStatus().equals(Status.PAID)) {
                         throw new CustomException(ErrorCode.ORDER_CANNOT_UPLOAD_PROOF);
                 }
                 String urlString = fileStorageService.storeFile(file, "proof", sellerId.toString());

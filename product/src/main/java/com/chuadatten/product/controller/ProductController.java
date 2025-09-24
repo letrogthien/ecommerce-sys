@@ -93,6 +93,13 @@ public class ProductController {
         return productService.addImages(productId, file, alt, main, position);
     }
 
+    @GetMapping("/seller")
+    public ApiResponse<Page<ProductDto>> getBySeller(@Parameter(hidden = true) @JwtClaims("id") UUID sellerId,
+                                                     @RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "10") int size) {
+        return productService.getBySeller(sellerId, page, size);
+    }
+
 
     
 }

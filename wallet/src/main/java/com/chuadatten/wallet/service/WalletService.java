@@ -37,8 +37,8 @@ public interface WalletService {
      */
     ApiResponse<Void> transferMoney(UUID fromUserId, UUID toUserId, double amount);
 
-    /**
-     * 
-     */
+    
+    
+    
 
 }

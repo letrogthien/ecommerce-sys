@@ -68,6 +68,7 @@ public class Security {
                 .requestMatchers(
                     "/api/v1/user-service/auth/login",
                     "/api/v1/user-service/auth/register",
+                    "/api/v1/user-service/auth/register/**",
                     "/api/v1/user-service/auth/verify-2fa",
                     "/api/v1/user-service/auth/trust-device",
                     "/api/v1/user-service/auth/reset-password",

@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum ConstString {
-    DOMAIN_NAME("http://localhost:8082/api/v1/auth/"),
-    FE_DOMAIN("http://localhost:5173/activate");
+    DOMAIN_NAME("https://auth.wezd.io.vn/api/v1/auth/"),
+    FE_DOMAIN("https://wezd.io.vn/activate");
 
     private final String value;
     private ConstString(String value) {

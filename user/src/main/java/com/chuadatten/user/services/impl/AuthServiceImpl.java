@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,12 +89,30 @@ public class AuthServiceImpl implements AuthService {
             responseData = "Username already exists";
         }
         if (this.existEmail(registerRequest.getEmail())) {
+            UserAuth user = userRepository.findByEmail(registerRequest.getEmail()).orElse(null);
+            if (user != null && user.getStatus() == Status.INACTIVE) {
+                PasswordHistory newPasswordHistory = new PasswordHistory();
+                newPasswordHistory.setUser(user);
+                newPasswordHistory
+                        .setPasswordHash(
+                                this.passwordEncoder.passwordEncoder().encode(registerRequest.getPassword()));
+                newPasswordHistory.setCurrentIndex(0);
+                this.passwordHistoryRepository.save(newPasswordHistory);
+                this.generateRegistrationEventOutBox(user);
+                return ApiResponse.<String>builder()
+                        .message("Registration successful, please check your email to activate your account")
+                        .data("Registration")
+                        .build();
+
+            }
+
             responseData += (responseData.isEmpty() ? "" : ", ") + "Email already exists";
         }
         if (!responseData.isEmpty()) {
             return ApiResponse.<String>builder()
                     .message("Registration failed")
                     .data(responseData)
+                    .status(HttpStatus.CONFLICT)
                     .build();
         }
 
@@ -237,7 +256,7 @@ public class AuthServiceImpl implements AuthService {
         accessTokenCookie.setSecure(true);
         accessTokenCookie.setDomain("wezd.io.vn");
         accessTokenCookie.setPath("/");
-        accessTokenCookie.setMaxAge(60 * 60); 
+        accessTokenCookie.setMaxAge(60 * 60);
         response.addCookie(accessTokenCookie);
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
@@ -245,7 +264,7 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setDomain("wezd.io.vn");
         refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); 
+        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
         response.addCookie(refreshTokenCookie);
         return ApiResponse.<LoginResponse>builder()
                 .message("Login successful")
@@ -338,7 +357,7 @@ public class AuthServiceImpl implements AuthService {
         accessTokenCookie.setSecure(true);
         accessTokenCookie.setDomain("wezd.io.vn");
         accessTokenCookie.setPath("/");
-        accessTokenCookie.setMaxAge(60 * 60); 
+        accessTokenCookie.setMaxAge(60 * 60);
         response.addCookie(accessTokenCookie);
 
         return ApiResponse.<String>builder()
@@ -599,6 +618,7 @@ public class AuthServiceImpl implements AuthService {
         Cookie cookie = new Cookie("access_token", null);
         cookie.setHttpOnly(true);
         cookie.setSecure(false);
+        cookie.setDomain("wezd.io.vn");
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
@@ -606,6 +626,7 @@ public class AuthServiceImpl implements AuthService {
         Cookie refreshTokenCookie = new Cookie("refresh_token", null);
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(false);
+        refreshTokenCookie.setDomain("wezd.io.vn");
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(0);
         response.addCookie(refreshTokenCookie);
@@ -634,5 +655,10 @@ public class AuthServiceImpl implements AuthService {
                 .message("OTP sent to your email")
                 .data("OTP sent to your email")
                 .build();
+    }
+
+    @Override
+    public Object registerWithRole(UUID userId, RoleName roleName) {
+        return assignRoleHelper(userId, roleName);
     }
 }

@@ -1,20 +1,18 @@
 package com.chuadatten.transaction.service;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.chuadatten.event.OrderCancel;
 import com.chuadatten.transaction.common.JsonParserUtil;
-import com.chuadatten.transaction.entity.Order;
-import com.chuadatten.transaction.entity.OrderItem;
 import com.chuadatten.transaction.kafka.KafkaTopic;
 import com.chuadatten.transaction.outbox.OutboxEvent;
 import com.chuadatten.transaction.outbox.OutboxRepository;
-import com.chuadatten.transaction.repository.OrderItemRepository;
 import com.chuadatten.transaction.repository.OrderRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -26,13 +24,14 @@ public class AppSchedule {
 
 
     @Scheduled(initialDelay = 5000, fixedDelay = 1000)
+    @Transactional
     public void cleanUpTransactions() {
         cleanUpOldTransactions();
     }
 
 
     private void cleanUpOldTransactions() {
-        orderRepository.findOrdersToCancel().forEach(order -> {
+        orderRepository.findOrdersToCancel(LocalDateTime.now().minusMinutes(30)).forEach(order -> {
 
             OrderCancel orderCancel = OrderCancel.builder()
                     .items(

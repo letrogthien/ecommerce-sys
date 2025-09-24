@@ -13,6 +13,7 @@ import com.chuadatten.event.RegistrationEvent;
 import com.chuadatten.event.StrangeDevice;
 import com.chuadatten.notify.mail.EmailSender;
 import com.chuadatten.notify.socket.NotifyService;
+import com.chuadatten.notify.socket.messageType.PayUrl;
 
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +55,8 @@ public class EventListener {
     @KafkaListener(topics = "payment.url.success", concurrency = "3",groupId = "group1")
     public void listenPaymentUrlSuccess(PayUrlEvent payUrlEvent) {
         String url =  payUrlEvent.getPayUrl();
-        notifyService.pushToUser(payUrlEvent.getUserId(), url);
+        PayUrl payUrl = new PayUrl(url, "PAY_URL");
+        notifyService.pushToUser(payUrlEvent.getUserId(), payUrl.toJson());
     }
 
 }

@@ -1,0 +1,512 @@
+================================================================================
+                    HƯỚNG DẪN TRIỂN KHAI ANALYTICS API CHO BACKEND
+                           Transaction Service - Seller Analytics
+================================================================================
+
+📋 MỤC LỤC:
+1. Tổng quan
+2. Cấu trúc Database Schema cần thiết
+3. Chi tiết các Endpoints theo độ ưu tiên
+4. Models/DTOs
+5. Business Logic Requirements
+6. Performance & Caching Strategy
+7. Security Requirements
+8. Testing Scenarios
+
+================================================================================
+1. TỔNG QUAN
+================================================================================
+
+Service: transaction-service
+Base URL: /api/v1/transaction-service/analytics
+Authentication: JWT Bearer Token
+Rate Limiting: 100 requests/minute per seller
+
+Mục đích: Cung cấp thống kê chi tiết cho seller dashboard bao gồm:
+- Doanh thu và đơn hàng theo thời gian
+- Phân tích sản phẩm bán chạy
+- Thống kê khách hàng
+- Hiệu suất hoạt động
+- Xuất báo cáo
+
+================================================================================
+2. CẤU TRÚC DATABASE SCHEMA CẦN THIẾT
+================================================================================
+
+Giả định các entities chính cần có:
+- Orders (với seller_id, buyer_id, total_amount, status, timestamps)
+- Order Items (với order_id, product_id, quantity, price)
+- Products (với seller_id, name, category)
+- Users/Customers (với display_name, contact info)
+
+Thêm entities cho analytics (tùy chọn):
+- Seller Analytics Cache (để cache kết quả tính toán)
+- Seller Goals (để track mục tiêu)
+- Product Ratings (để tính average rating)
+
+Indexes khuyến nghị:
+- Orders: index theo (seller_id, created_at), (seller_id, status)
+- Order Items: index theo (product_id, created_at)
+- Composite indexes cho performance queries
+
+================================================================================
+3. CHI TIẾT CÁC ENDPOINTS THEO ĐỘ ƯU TIÊN
+================================================================================
+
+🔥 PHASE 1 - CRITICAL (Triển khai đầu tiên)
+================================================================================
+
+📊 1.1. ANALYTICS OVERVIEW
+================================================================================
+Endpoint: GET /api/v1/transaction-service/analytics/seller/{sellerId}/overview
+
+Query Parameters:
+- period: int (7, 30, 90, 365) - số ngày từ hiện tại về trước
+- startDate: string (YYYY-MM-DD) - optional, override period
+- endDate: string (YYYY-MM-DD) - optional, override period
+
+Headers:
+- Authorization: Bearer {jwt_token}
+
+Business Logic:
+1. Validate sellerId belongs to authenticated user OR user has admin role
+2. Calculate date range based on period or startDate/endDate
+3. Query aggregated data:
+   - Total revenue từ orders với status IN ('COMPLETED', 'DELIVERED')
+   - Total orders count
+   - Average order value = total_revenue / total_orders
+   - Order status distribution
+   - Customer metrics
+4. Calculate growth rate so với period trước đó
+5. Return formatted response
+
+Data Requirements:
+- Aggregate revenue from completed/delivered orders only
+- Count total orders in specified period
+- Calculate average order value
+- Group orders by status for distribution
+- Count unique customers and identify new vs returning
+- Compare with previous period for growth calculation
+
+Response Format:
+```json
+{
+    "success": true,
+    "data": {
+        "totalRevenue": 15750000,
+        "totalOrders": 125,
+        "averageOrderValue": 126000,
+        "completedOrders": 98,
+        "pendingOrders": 15,
+        "cancelledOrders": 12,
+        "newCustomers": 32,
+        "returningCustomers": 78,
+        "averageRating": 4.8,
+        "deliverySuccessRate": 96.5,
+        "averageProcessingTime": 2.5,
+        "responseRate": 98.2,
+        "monthlyGrowth": {
+            "revenue": 12.5,
+            "orders": 8.3,
+            "avgOrderValue": -2.1
+        }
+    },
+    "message": "Analytics overview retrieved successfully"
+}
+```
+
+Error Handling:
+- 401: Unauthorized
+- 403: Forbidden (not seller's data)
+- 400: Invalid date format
+- 500: Internal server error
+
+================================================================================
+
+📈 1.2. REVENUE CHART DATA
+================================================================================
+Endpoint: GET /api/v1/transaction-service/analytics/seller/{sellerId}/revenue-chart
+
+Query Parameters:
+- period: string ("7d", "30d", "3m", "1y")
+- groupBy: string ("day", "week", "month")
+
+Business Logic:
+1. Validate parameters
+2. Calculate appropriate date range and grouping
+3. Group orders by time period (day/week/month)
+4. Return time series data for revenue and order count
+
+Data Requirements:
+- Group completed/delivered orders by specified time period
+- Calculate total revenue and order count for each period
+- Return chronological data for chart visualization
+
+Response:
+```json
+{
+    "success": true,
+    "data": [
+        {
+            "period": "2024-09-15",
+            "revenue": 2450000,
+            "orders": 18
+        },
+        {
+            "period": "2024-09-16", 
+            "revenue": 1850000,
+            "orders": 12
+        }
+    ]
+}
+```
+
+================================================================================
+
+🏆 1.3. TOP SELLING PRODUCTS
+================================================================================
+Endpoint: GET /api/v1/transaction-service/analytics/seller/{sellerId}/top-products
+
+Query Parameters:
+- period: int (7, 30, 90, 365)
+- limit: int (default: 5, max: 20)
+
+Business Logic:
+1. Join orders, order_items, products data
+2. Calculate total sales quantity and revenue per product
+3. Order by total revenue DESC
+4. Return top N products with ranking
+
+Data Requirements:
+- Aggregate sales data by product for specified period
+- Include only completed/delivered orders
+- Calculate total quantity sold and total revenue per product
+- Rank products by revenue performance
+
+Response:
+```json
+{
+    "success": true,
+    "data": {
+        "products": [
+            {
+                "productId": "prod-123",
+                "productName": "Minecraft Premium Account",
+                "totalSales": 45,
+                "totalRevenue": 2250000,
+                "rank": 1
+            }
+        ]
+    }
+}
+```
+
+================================================================================
+
+⚡ PHASE 2 - IMPORTANT (Triển khai tiếp theo)
+================================================================================
+
+👥 2.1. CUSTOMER ANALYTICS
+================================================================================
+Endpoint: GET /api/v1/transaction-service/analytics/seller/{sellerId}/customers
+
+Query Parameters:
+- period: int (7, 30, 90, 365)
+
+Business Logic:
+1. Tính tổng customers, new customers, returning customers
+2. Tính average orders per customer
+3. Identify VIP customers (top spenders)
+4. Return customer insights
+
+Data Requirements:
+- Count unique customers who placed orders with seller
+- Identify new customers (first order in period)
+- Identify returning customers (multiple orders)
+- Calculate average orders per customer
+- Identify top spending customers for VIP list
+- Return aggregated customer statistics and VIP customer list
+
+================================================================================
+
+📊 2.2. ORDER STATUS DISTRIBUTION
+================================================================================
+Endpoint: GET /api/v1/transaction-service/analytics/seller/{sellerId}/order-status
+
+Query Parameters:
+- period: int (7, 30, 90, 365)
+
+Business Logic:
+1. Group orders by status
+2. Calculate count và percentage for each status
+3. Return distribution data
+
+================================================================================
+
+⚙️ 2.3. PERFORMANCE METRICS
+================================================================================
+Endpoint: GET /api/v1/transaction-service/analytics/seller/{sellerId}/performance
+
+Business Logic:
+1. Calculate delivery success rate
+2. Calculate average processing time
+3. Get response rate (nếu có chat/messaging system)
+4. Get seller goals and progress
+
+================================================================================
+
+🔹 PHASE 3 - NICE TO HAVE (Tính năng bổ sung)
+================================================================================
+
+📄 3.1. EXPORT ANALYTICS REPORT
+================================================================================
+Endpoint: GET /api/v1/transaction-service/analytics/seller/{sellerId}/export
+
+Query Parameters:
+- period: int (7, 30, 90, 365)
+- format: string ("excel", "pdf", "csv")
+
+Business Logic:
+1. Aggregate all analytics data
+2. Generate file in requested format
+3. Return file download response
+
+================================================================================
+
+📦 3.2. PRODUCT PERFORMANCE DETAIL
+================================================================================
+Endpoint: GET /api/v1/transaction-service/analytics/seller/{sellerId}/products/{productId}/performance
+
+Query Parameters:
+- period: int (7, 30, 90, 365)
+
+Business Logic:
+1. Get detailed performance for specific product
+2. Include daily sales trend
+3. Include rating information
+
+================================================================================
+4. MODELS/DTOs
+================================================================================
+
+```java
+// AnalyticsOverviewDTO.java
+public class AnalyticsOverviewDTO {
+    private BigDecimal totalRevenue;
+    private Integer totalOrders;
+    private BigDecimal averageOrderValue;
+    private Integer completedOrders;
+    private Integer pendingOrders;
+    private Integer cancelledOrders;
+    private Integer newCustomers;
+    private Integer returningCustomers;
+    private Double averageRating;
+    private Double deliverySuccessRate;
+    private Double averageProcessingTime;
+    private Double responseRate;
+    private MonthlyGrowthDTO monthlyGrowth;
+    
+    // getters, setters, constructors
+}
+
+// MonthlyGrowthDTO.java
+public class MonthlyGrowthDTO {
+    private Double revenue;
+    private Double orders;
+    private Double avgOrderValue;
+    
+    // getters, setters, constructors
+}
+
+// RevenueChartDataDTO.java
+public class RevenueChartDataDTO {
+    private String period;
+    private BigDecimal revenue;
+    private Integer orders;
+    
+    // getters, setters, constructors
+}
+
+// TopProductDTO.java
+public class TopProductDTO {
+    private String productId;
+    private String productName;
+    private Integer totalSales;
+    private BigDecimal totalRevenue;
+    private Integer rank;
+    
+    // getters, setters, constructors
+}
+```
+
+================================================================================
+5. BUSINESS LOGIC REQUIREMENTS
+================================================================================
+
+5.1. Date Range Calculation:
+- period = 7: từ 7 ngày trước đến hiện tại
+- period = 30: từ 30 ngày trước đến hiện tại
+- Nếu có startDate & endDate: sử dụng range này
+- Validate startDate <= endDate
+- Max range: 2 years
+
+5.2. Revenue Calculation:
+- Chỉ tính orders với status: 'COMPLETED', 'DELIVERED'
+- Sử dụng total_amount từ orders table
+- Exclude cancelled orders
+
+5.3. Growth Rate Calculation:
+- So sánh với cùng period ở khoảng thời gian trước
+- Formula: ((current - previous) / previous) * 100
+- Nếu previous = 0, return null hoặc 0
+
+5.4. Customer Classification:
+- New customer: first order trong period
+- Returning customer: có > 1 order với seller
+- VIP customer: top 10% về total spending
+
+================================================================================
+6. PERFORMANCE & CACHING STRATEGY
+================================================================================
+
+6.1. Database Optimization:
+- Thêm appropriate indexes cho seller analytics queries
+- Consider data partitioning strategies cho large datasets
+- Use read replicas cho analytics queries nếu có thể
+
+6.2. Caching Strategy:
+- Cache overview data: TTL 15 minutes
+- Cache chart data: TTL 30 minutes  
+- Cache top products: TTL 1 hour
+- Use Redis với key pattern: "analytics:{sellerId}:{endpoint}:{period}"
+
+6.3. Query Optimization:
+- Use pagination cho large result sets
+- Implement appropriate filtering và sorting
+- Consider pre-computed aggregations cho frequently accessed data
+
+================================================================================
+7. SECURITY REQUIREMENTS
+================================================================================
+
+7.1. Authorization:
+- Verify sellerId belongs to authenticated user
+- Admin users có thể access any seller data
+- Rate limiting: 100 requests/minute per user
+
+7.2. Data Privacy:
+- Mask customer personal information
+- Only return customer IDs, không return email/phone
+- Log analytics access cho auditing
+
+7.3. Input Validation:
+- Validate all query parameters
+- Sanitize date inputs
+- Check numeric ranges (period: 1-365)
+
+================================================================================
+8. TESTING SCENARIOS
+================================================================================
+
+8.1. Unit Tests:
+- Test date range calculation
+- Test growth rate calculation với edge cases
+- Test aggregation logic với mock data
+
+8.2. Integration Tests:
+- Test với real database data
+- Test performance với large datasets
+- Test caching behavior
+
+8.3. API Tests:
+- Test all endpoints với valid parameters
+- Test error scenarios (invalid dates, unauthorized access)
+- Test response formats
+
+8.4. Performance Tests:
+- Load test với 1000 concurrent requests
+- Test query performance với 1M+ orders
+- Test caching effectiveness
+
+================================================================================
+9. IMPLEMENTATION CHECKLIST
+================================================================================
+
+Phase 1 (Week 1-2):
+□ Setup analytics controller and service
+□ Implement overview endpoint
+□ Implement revenue chart endpoint  
+□ Implement top products endpoint
+□ Add basic caching
+□ Write unit tests
+
+Phase 2 (Week 3):
+□ Implement customer analytics endpoint
+□ Implement order status distribution
+□ Implement performance metrics
+□ Add comprehensive error handling
+□ Performance optimization
+
+Phase 3 (Week 4):
+□ Implement export functionality
+□ Implement product detail analytics
+□ Add advanced caching strategy
+□ Complete integration tests
+□ Performance testing and optimization
+
+================================================================================
+10. API RESPONSE STANDARDS
+================================================================================
+
+Success Response Format:
+```json
+{
+    "success": true,
+    "data": { ... },
+    "message": "Success message",
+    "timestamp": "2024-09-22T10:30:00Z"
+}
+```
+
+Error Response Format:
+```json
+{
+    "success": false,
+    "error": {
+        "code": "INVALID_PARAMETER",
+        "message": "Period must be between 1 and 365 days",
+        "details": { ... }
+    },
+    "timestamp": "2024-09-22T10:30:00Z"
+}
+```
+
+================================================================================
+11. DEPLOYMENT NOTES
+================================================================================
+
+Environment Variables:
+- ANALYTICS_CACHE_TTL=900 (15 minutes)
+- ANALYTICS_MAX_PERIOD=365
+- ANALYTICS_RATE_LIMIT=100
+
+Database Migration:
+- Create indexes before deployment
+- Test performance on staging với production-like data
+- Plan for zero-downtime deployment
+
+Monitoring:
+- Setup alerts cho slow queries (>5s)
+- Monitor cache hit rate (target: >80%)
+- Track API response times
+
+================================================================================
+
+📞 CONTACT & SUPPORT
+================================================================================
+Nếu có questions về specification này:
+- Frontend Developer: [your-email]
+- Technical Discussion: Create issue trong project repository
+
+Document Version: 1.0
+Last Updated: September 22, 2025
