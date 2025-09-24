@@ -14,7 +14,10 @@ import com.chuadatten.user.requests.SellerRatingRequest;
 public interface SellerRatingMapper {
     @Mapping(target = "buyerId", source = "buyer.id")
     @Mapping(target = "sellerId", source = "seller.id")
-    @Mapping(target = "transactionId", source = "transaction.id")
+    @Mapping(target = "buyerUsername", source = "buyer.displayName")
+    @Mapping(target = "sellerUsername", source = "seller.displayName")
+    @Mapping(target = "rating", source = "ratingScore")
+    @Mapping(target = "comment", source = "reviewText")
     SellerRatingDto toDto(SellerRating sellerRating);
 
     @Mapping(target = "buyer", ignore = true)

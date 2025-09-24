@@ -7,7 +7,6 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -72,8 +71,10 @@ public class PaymentController {
     }
 
     @PostMapping("/{paymentId}/retry")
-    public ApiResponse<String> retryPayment(@PathVariable UUID paymentId) {
-        return paymentService.retryPayment(paymentId);
+    public ApiResponse<String> retryPayment(@PathVariable UUID paymentId, HttpServletRequest request)
+            throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException {
+        String clientIp = getClientIpAddress(request);
+        return paymentService.retryPayment(paymentId, clientIp);
     }
 
     @PutMapping("/{paymentId}/cancel")
@@ -101,20 +102,73 @@ public class PaymentController {
         return paymentService.getPaymentAttempts(paymentId);
     }
 
-    // VNPay callback endpoints
-    @GetMapping("/vnpay_return")
-    @Operation(summary = "VNPay return callback", description = "Handle VNPay return callback")
-    public ApiResponse<VnpayReturnDto> handleVnpayReturnDeposit(@ModelAttribute VnpayReturnDto vnpayReturnDto) {
-        return ApiResponse.<VnpayReturnDto>builder()
-                .data(vnpayReturnDto)
-                .message("ok")
-                .build();
-    }
+    // // VNPay callback endpoints
+    // @GetMapping("/vnpay_return")
+    // @Operation(summary = "VNPay return callback", description = "Handle VNPay return callback")
+    // public ApiResponse<VnpayReturnDto> handleVnpayReturnDeposit(
+    //         @RequestParam(name = "vnp_Amount", required = false) String vnpAmount,
+    //         @RequestParam(name = "vnp_BankCode", required = false) String vnpBankCode,
+    //         @RequestParam(name = "vnp_BankTranNo", required = false) String vnpBankTranNo,
+    //         @RequestParam(name = "vnp_CardType", required = false) String vnpCardType,
+    //         @RequestParam(name = "vnp_OrderInfo", required = false) String vnpOrderInfo,
+    //         @RequestParam(name = "vnp_PayDate", required = false) String vnpPayDate,
+    //         @RequestParam(name = "vnp_ResponseCode", required = false) String vnpResponseCode,
+    //         @RequestParam(name = "vnp_TmnCode", required = false) String vnpTmnCode,
+    //         @RequestParam(name = "vnp_TransactionNo", required = false) String vnpTransactionNo,
+    //         @RequestParam(name = "vnp_TxnRef", required = false) String vnpTxnRef,
+    //         @RequestParam(name = "vnp_SecureHash", required = false) String vnpSecureHash,
+    //         @RequestParam(name = "vnp_TransactionStatus", required = false) String vnpTransactionStatus)
+    //         throws InvalidKeyException, JsonProcessingException, NoSuchAlgorithmException {
+    //     VnpayReturnDto vnpayReturnDto = VnpayReturnDto.builder()
+    //             .amount(vnpAmount)
+    //             .bankCode(vnpBankCode)
+    //             .bankTranNo(vnpBankTranNo)
+    //             .cardType(vnpCardType)
+    //             .orderInfo(vnpOrderInfo)
+    //             .payDate(vnpPayDate)
+    //             .responseCode(vnpResponseCode)
+    //             .tmnCode(vnpTmnCode)
+    //             .transactionNo(vnpTransactionNo)
+    //             .txnRef(vnpTxnRef)
+    //             .secureHash(vnpSecureHash)
+    //             .transactionStatus(vnpTransactionStatus)
+    //             .build();
+    //     paymentService.handleProviderCallback(vnpayReturnDto);
+    //     return ApiResponse.<VnpayReturnDto>builder()
+    //             .data(vnpayReturnDto)
+    //             .message("ok")
+    //             .build();
+    // }
 
     @GetMapping("/IPN")
-    @Operation(summary = "VNPay IPN callback", description = "Handle VNPay IPN (Instant Payment Notification) callback")
-    public ApiResponse<String> handleVnpayIpn(@ModelAttribute VnpayReturnDto vnpayReturnDto)
+    public ApiResponse<String> handleVnpayIpn(
+            @RequestParam(name = "vnp_Amount", required = false) String vnpAmount,
+            @RequestParam(name = "vnp_BankCode", required = false) String vnpBankCode,
+            @RequestParam(name = "vnp_BankTranNo", required = false) String vnpBankTranNo,
+            @RequestParam(name = "vnp_CardType", required = false) String vnpCardType,
+            @RequestParam(name = "vnp_OrderInfo", required = false) String vnpOrderInfo,
+            @RequestParam(name = "vnp_PayDate", required = false) String vnpPayDate,
+            @RequestParam(name = "vnp_ResponseCode", required = false) String vnpResponseCode,
+            @RequestParam(name = "vnp_TmnCode", required = false) String vnpTmnCode,
+            @RequestParam(name = "vnp_TransactionNo", required = false) String vnpTransactionNo,
+            @RequestParam(name = "vnp_TxnRef", required = false) String vnpTxnRef,
+            @RequestParam(name = "vnp_SecureHash", required = false) String vnpSecureHash,
+            @RequestParam(name = "vnp_TransactionStatus", required = false) String vnpTransactionStatus)
             throws InvalidKeyException, JsonProcessingException, NoSuchAlgorithmException {
+        VnpayReturnDto vnpayReturnDto = VnpayReturnDto.builder()
+                .amount(vnpAmount)
+                .bankCode(vnpBankCode)
+                .bankTranNo(vnpBankTranNo)
+                .cardType(vnpCardType)
+                .orderInfo(vnpOrderInfo)
+                .payDate(vnpPayDate)
+                .responseCode(vnpResponseCode)
+                .tmnCode(vnpTmnCode)
+                .transactionNo(vnpTransactionNo)
+                .txnRef(vnpTxnRef)
+                .secureHash(vnpSecureHash)
+                .transactionStatus(vnpTransactionStatus)
+                .build();
         paymentService.handleProviderCallback(vnpayReturnDto);
         return ApiResponse.<String>builder()
                 .data("ok")
@@ -124,9 +178,14 @@ public class PaymentController {
 
     // Helper method to get client IP address
     private String getClientIpAddress(HttpServletRequest request) {
-   
+
         return request.getRemoteAddr();
-      
+
+    }
+
+    @GetMapping("/test")
+    public String getMethodName() {
+        return "hi";
     }
 
 }

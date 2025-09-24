@@ -14,6 +14,7 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.chuadatten.event.OrderCancel;
 import com.chuadatten.event.OrderCheckingStatusEvent;
 import com.chuadatten.event.OrderComfirmData;
 import com.chuadatten.event.OrderCreatedEvent;
@@ -59,6 +60,16 @@ public class OutBoxSchedule {
         pollAndPublish(KafkaTopic.ORDER_SUCCESS);
     }
 
+    @Scheduled(initialDelay = 5000, fixedDelay = 1000)
+    public void orderCancel() {
+        pollAndPublish(KafkaTopic.ORDER_CANCEL);
+    }   
+
+    @Scheduled(initialDelay = 5000, fixedDelay = 1000)
+    public void cleanUpOrder() {
+        pollAndPublish(KafkaTopic.CLEAN_UP_ORDER);
+    }
+
 
     private Object parserObject(KafkaTopic topic, String payload) {
         switch (topic) {
@@ -70,6 +81,10 @@ public class OutBoxSchedule {
                 return jsonParserUtil.fromJson(payload, OrderCheckingStatusEvent.class);
             case ORDER_SUCCESS:
                 return jsonParserUtil.fromJson(payload, OrderSuccess.class);
+            case ORDER_CANCEL:
+                return jsonParserUtil.fromJson(payload, OrderCancel.class);
+            case CLEAN_UP_ORDER:
+                return jsonParserUtil.fromJson(payload, OrderCancel.class);
             default:
                 return jsonParserUtil.fromJson(payload, Object.class);
         }

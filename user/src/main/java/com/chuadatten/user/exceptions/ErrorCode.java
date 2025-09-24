@@ -30,8 +30,12 @@ public enum ErrorCode {
     VERIFICATION_NOT_EXIST("E020", "Verification not exist", HttpStatus.BAD_REQUEST), 
     TRANSACTION_NOT_FOUND("E021", "Transaction not found", HttpStatus.NOT_FOUND), 
     INVALID_REQUEST("E022", "Invalid request", HttpStatus.BAD_REQUEST), 
-     PREFERENCE_NOT_FOUND("E023", "Preference not found", HttpStatus.NOT_FOUND), 
-     BILLING_ADDRESS_NOT_FOUND("E024", "Billing address not found", HttpStatus.NOT_FOUND),
+    PREFERENCE_NOT_FOUND("E023", "Preference not found", HttpStatus.NOT_FOUND), 
+    BILLING_ADDRESS_NOT_FOUND("E024", "Billing address not found", HttpStatus.NOT_FOUND),
+    DEVICE_NOT_FOUND("E025", "Device not found", HttpStatus.NOT_FOUND),
+    KYC_NOT_FOUND("E026", "KYC not found", HttpStatus.NOT_FOUND),
+    APPLICATION_NOT_FOUND("E027", "Application not found", HttpStatus.NOT_FOUND),
+    RATING_NOT_FOUND("E028", "Rating not found", HttpStatus.NOT_FOUND),
     ;
 
     private final String code;

@@ -10,6 +10,7 @@ import com.chuadatten.wallet.common.PaymentMethod;
 import com.chuadatten.wallet.dto.PaymentAttemptDto;
 import com.chuadatten.wallet.dto.PaymentDto;
 import com.chuadatten.wallet.responses.ApiResponse;
+import com.chuadatten.wallet.vnpay.IPNReturn;
 import com.chuadatten.wallet.vnpay.VnpayReturnDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -64,7 +65,7 @@ public interface PaymentService {
      *                callback data
      * @return ApiResponse containing updated payment information
      */
-    ApiResponse<PaymentDto> handleProviderCallback(VnpayReturnDto request) throws InvalidKeyException, NoSuchAlgorithmException,JsonProcessingException;
+    IPNReturn handleProviderCallback(VnpayReturnDto request) throws InvalidKeyException, NoSuchAlgorithmException,JsonProcessingException;
 
     /**
      * Payment
@@ -79,7 +80,7 @@ public interface PaymentService {
      * Retry payment when in pending status
      * 
      */
-    ApiResponse<String> retryPayment(UUID paymentId);
+    ApiResponse<String> retryPayment(UUID paymentId, String ip) throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException;
 
     /**
      * Cancel payment
@@ -99,4 +100,6 @@ public interface PaymentService {
      * @return ApiResponse containing list of payment attempts
      */
     ApiResponse<PaymentAttemptDto> getPaymentAttempts(UUID paymentId);
+
+    ApiResponse<Void> depositWallet(UUID userId, double amount, String ip) throws InvalidKeyException, NoSuchAlgorithmException, JsonProcessingException;
 }

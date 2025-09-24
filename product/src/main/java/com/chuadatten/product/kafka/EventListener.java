@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import com.chuadatten.event.OrderCancel;
 import com.chuadatten.event.OrderCreatedEvent;
 import com.chuadatten.event.OrderCreatedEvent.OrderItemEvent;
 import com.chuadatten.event.OrderSuccess;
@@ -26,6 +27,25 @@ public class EventListener {
     private final ProductVariantRepository productVariantRepository;
     private final OutboxRepository outboxEventRepository;
     private final JsonParserUtil jsonParserUtil;
+
+
+
+    @KafkaListener(topics = "transaction.order.cancel", groupId = "product-group")
+    public void listenOrderCancelEvent(OrderCancel event) {
+        handleReleaseReservedStock(event);
+    }
+    private void handleReleaseReservedStock(OrderCancel event) {
+        if (event.getItems().size() > 1) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+        com.chuadatten.event.OrderCancel.OrderItemEvent item = event.getItems().get(0);
+
+        productVariantRepository.findById(item.getProductVariantId()).ifPresent(variant -> {
+            variant.setAvailableQty(variant.getAvailableQty() + item.getQuantity());
+            variant.setReservedQty(variant.getReservedQty() - item.getQuantity());
+            productVariantRepository.save(variant);
+        });
+    }
 
     @KafkaListener(topics = "transaction.order.created", groupId = "product-group")
     public void listenOrderCreatedEvent(OrderCreatedEvent event) {
@@ -69,7 +89,7 @@ public class EventListener {
 
     }
 
-    @KafkaListener(topics = "payment.success", groupId = "transaction-group")
+    @KafkaListener(topics = "transaction.order.success", groupId = "transaction-group")
     public void listenOrderSuccess(OrderSuccess event) {
         // Process each product in the successful order
         event.getProducts().forEach(product -> 
@@ -85,6 +105,8 @@ public class EventListener {
         );
     }
 
-
-
+    @KafkaListener(topics = "transaction.clean.up.order", groupId = "transaction-group")
+    public void listenCleanUpOrderEvent(OrderCancel event) {
+        handleReleaseReservedStock(event);
+    }
 }

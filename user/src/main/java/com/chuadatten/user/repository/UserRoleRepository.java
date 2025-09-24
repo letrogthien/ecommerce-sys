@@ -23,4 +23,7 @@ public interface UserRoleRepository extends JpaRepository<UserRole, UUID> {
 
     @Query("SELECT u FROM UserAuth u WHERE u.id IN (SELECT ur.user.id FROM UserRole ur WHERE ur.role.id = :roleId)")
     List<UserAuth> findUsersByRoleId(@Param("roleId") UUID roleId);
+    
+    @Query("SELECT COUNT(ur) FROM UserRole ur WHERE ur.role.name = :roleName")
+    Long countByRoleName(@Param("roleName") String roleName);
 }

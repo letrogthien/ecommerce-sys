@@ -1,10 +1,12 @@
 package com.chuadatten.transaction.service.impl;
 
 import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
 import com.chuadatten.transaction.common.Status;
 import com.chuadatten.transaction.dto.OrderRefundDto;
 import com.chuadatten.transaction.entity.Order;
@@ -31,7 +33,7 @@ public class OrderRefundServiceImpl implements OrderRefundService {
     public ApiResponse<OrderRefundDto> requestRefund(OrderRefundCreateRq refundCreateRq, UUID buyerId) {
         Order order = orderRepository.findById(refundCreateRq.getOrderId()).orElseThrow(
                 () -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
-        if (order.getBuyerId() != buyerId) {
+        if (!order.getBuyerId().equals(buyerId)) {
 
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
@@ -60,7 +62,7 @@ public class OrderRefundServiceImpl implements OrderRefundService {
     @Override
     public ApiResponse<Page<OrderRefundDto>> getAllRefunds(Status status, UUID buyerId, int page, int limit) {
         Pageable pageable = PageRequest.of(page, limit);
-        Page<OrderRefundDto> orderRefunds = orderRefundRepository.findByRequestByAndStatus(buyerId, status, pageable)
+        Page<OrderRefundDto> orderRefunds = orderRefundRepository.findByRequestBy(buyerId, pageable)
                 .map(
                         transactionMapper::toOrderRefundDto);
 

@@ -140,4 +140,6 @@ public interface AuthService {
     ApiResponse<UserAuthReturnDto> getMe(UUID userId);
 
     void clearCookies(HttpServletResponse response);
+
+    Object registerWithRole(UUID userId, RoleName roleName);
 }

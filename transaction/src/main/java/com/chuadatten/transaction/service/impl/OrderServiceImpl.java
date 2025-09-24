@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.chuadatten.event.OrderCancel;
 import com.chuadatten.event.OrderCreatedEvent;
 import com.chuadatten.transaction.common.JsonParserUtil;
 import com.chuadatten.transaction.common.ProofType;
@@ -32,6 +33,7 @@ import com.chuadatten.transaction.request.OrderProofCreateRq;
 import com.chuadatten.transaction.responses.ApiResponse;
 import com.chuadatten.transaction.service.OrderService;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -93,13 +95,10 @@ public class OrderServiceImpl implements OrderService {
                                 .status("PENDING")
                                 .payload(jsonParserUtil.toJson(orderCreatedEvent))
                                 .build();
-                
-                System.out.println("Creating outbox event: " + outboxEvent);
-                System.out.println("Event payload: " + outboxEvent.getPayload());
+        
                 
                 outboxRepository.save(outboxEvent);
                 
-                System.out.println("Outbox event saved with ID: " + outboxEvent.getId());
 
                 orderRepository.save(order);
 
@@ -143,6 +142,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         @Override
+        @Transactional
         public ApiResponse<OrderDto> cancelOrder(UUID orderId, UUID buyerId) {
                 Order order = orderRepository.findById(orderId)
                                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
@@ -150,6 +150,23 @@ public class OrderServiceImpl implements OrderService {
                                 || order.getStatus().equals(Status.PAYING)) {
                         throw new CustomException(ErrorCode.ORDER_CANNOT_CANCEL);
                 }
+                OrderCancel orderCancel = OrderCancel.builder()
+                                .orderId(order.getId().toString())
+                                .items(order.getItems().stream().map(item -> OrderCancel.OrderItemEvent.builder()
+                                                .productId(item.getProductId())
+                                                .productVariantId(item.getProductVariantId())
+                                                .quantity(item.getQuantity())
+                                                .unitPrice(item.getUnitPrice())
+                                                .build()).toList())
+                                .build();
+                OutboxEvent outboxEvent = OutboxEvent.builder()
+                                .eventType(KafkaTopic.ORDER_CANCEL.name())
+                                .aggregateId(order.getId().toString())
+                                .aggregateType(Order.class.getName())
+                                .status("PENDING")
+                                .payload(jsonParserUtil.toJson(orderCancel))
+                                .build();
+                outboxRepository.save(outboxEvent);
                 order.setStatus(Status.CANCELLED);
                 orderRepository.save(order);
                 return ApiResponse.<OrderDto>builder()
@@ -162,7 +179,7 @@ public class OrderServiceImpl implements OrderService {
                         MultipartFile file, UUID sellerId) {
                 Order order = orderRepository.findById(orderId)
                                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
-                if (!order.getStatus().equals(Status.APPROVED)) {
+                if (!order.getStatus().equals(Status.PAID)) {
                         throw new CustomException(ErrorCode.ORDER_CANNOT_UPLOAD_PROOF);
                 }
                 String urlString = fileStorageService.storeFile(file, "proof", sellerId.toString());

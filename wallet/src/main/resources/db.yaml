@@ -18,4 +18,4 @@ spring:
 
 file: 
   upload-dir: uploads       
-  base-url: http://localhost:8084/files
+  base-url: https://pay.wezd.io.vn/files

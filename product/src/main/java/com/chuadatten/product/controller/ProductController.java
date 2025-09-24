@@ -1,6 +1,5 @@
 package com.chuadatten.product.controller;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -32,6 +31,14 @@ import lombok.RequiredArgsConstructor;
 public class ProductController {
 
     private final ProductService productService;
+
+    @GetMapping
+    public ApiResponse<Page<ProductDto>> getAllProducts(@RequestParam(defaultValue = "0") int page,
+                                                       @RequestParam(defaultValue = "10") int size,
+                                                       @RequestParam(defaultValue = "createdAt") String sortBy,
+                                                       @RequestParam(defaultValue = "desc") String sortDirection) {
+        return productService.getAllProducts(page, size, sortBy, sortDirection);
+    }
 
     @PostMapping
     public ApiResponse<ProductDto> create(@RequestBody ProductCreateRq request,
@@ -86,9 +93,13 @@ public class ProductController {
         return productService.addImages(productId, file, alt, main, position);
     }
 
-    @GetMapping("/all")
-    public ApiResponse<List<ProductDto>> getMethodName() {
-        return productService.getAll();
+    @GetMapping("/seller")
+    public ApiResponse<Page<ProductDto>> getBySeller(@Parameter(hidden = true) @JwtClaims("id") UUID sellerId,
+                                                     @RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "10") int size) {
+        return productService.getBySeller(sellerId, page, size);
     }
+
+
     
 }

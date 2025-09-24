@@ -17,6 +17,9 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
     Page<AuditLog> findByUserId(UUID userId, Pageable pageable);
     Page<AuditLog> findByActionContaining(String action, Pageable pageable);
     Page<AuditLog> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    
+    @Query("SELECT al FROM AuditLog al WHERE al.userId = :userId AND al.action LIKE CONCAT('%', :action, '%')")
+    Page<AuditLog> findByUserIdAndActionContaining(@Param("userId") UUID userId, @Param("action") String action, Pageable pageable);
 
     @Query("SELECT al FROM AuditLog al WHERE " +
            "(:action IS NULL OR al.action LIKE CONCAT('%', :action, '%')) AND " +

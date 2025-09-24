@@ -71,41 +71,7 @@ public class VnpayUltils {
         return payConfig.getVnpPayUrl() + "?" + sb.toString() + "&vnp_SecureHash=" + secureHash;
     }
 
-    private boolean validateIPN(Map<String, String> params) throws NoSuchAlgorithmException, InvalidKeyException {
-        String vnpSecureHash = params.get("vnp_SecureHash");
 
-        params.remove("vnp_SecureHash");
-        params.remove("vnp_SecureHashType");
-
-        List<String> fieldNames = new ArrayList<>(params.keySet());
-        Collections.sort(fieldNames);
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < fieldNames.size(); i++) {
-            String key = fieldNames.get(i);
-            String value = params.get(key);
-            if (value != null && !value.isEmpty()) {
-                sb.append(key).append("=").append(value);
-                if (i < fieldNames.size() - 1) {
-                    sb.append("&");
-                }
-            }
-        }
-
-        String checkHash = hmacSHA512(payConfig.getVnpHashSecret(), sb.toString());
-
-        return checkHash.equalsIgnoreCase(vnpSecureHash);
-    }
-
-    public void checkCallBack(VnpayReturnDto vnpayReturnDto) throws InvalidKeyException, NoSuchAlgorithmException {
-        String responseCode = vnpayReturnDto.getResponseCode();
-        if (!"00".equals(responseCode)) {
-            throw new PaymentException(PaymentErrorCode.valueOf(responseCode));
-        }
-        if (!validateIPN(vnpayReturnDto.toMap())) {
-            throw new PaymentException(PaymentErrorCode.UNKNOWN);
-        }
-    }
 
     private String hmacSHA512(final String key, final String data)
             throws InvalidKeyException, NoSuchAlgorithmException {

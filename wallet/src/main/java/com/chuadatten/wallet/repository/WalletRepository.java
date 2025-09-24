@@ -2,8 +2,7 @@ package com.chuadatten.wallet.repository;
 
 import com.chuadatten.wallet.common.Status;
 import com.chuadatten.wallet.entity.Wallet;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

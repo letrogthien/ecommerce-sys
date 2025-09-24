@@ -29,7 +29,7 @@ public class Security {
         security.cors(cors -> cors
             .configurationSource(request -> {
                 org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
-                config.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
+                config.setAllowedOrigins(java.util.List.of("https://auth.wezd.io.vn", "https://admin.wezd.io.vn", "https://wezd.io.vn", "http://localhost:3000", "http://localhost:5173"));
                 config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 config.setAllowedHeaders(java.util.List.of("*"));
                 config.setAllowCredentials(true);
@@ -68,6 +68,7 @@ public class Security {
                 .requestMatchers(
                     "/api/v1/user-service/auth/login",
                     "/api/v1/user-service/auth/register",
+                    "/api/v1/user-service/auth/register/**",
                     "/api/v1/user-service/auth/verify-2fa",
                     "/api/v1/user-service/auth/trust-device",
                     "/api/v1/user-service/auth/reset-password",

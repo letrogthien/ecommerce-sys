@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import com.chuadatten.event.OrderCancel;
 import com.chuadatten.event.OrderCheckingStatusEvent;
 import com.chuadatten.event.OrderComfirmData;
 import com.chuadatten.event.PayUrlEvent;
@@ -57,8 +58,44 @@ public class EventListener {
         @Transactional
         @KafkaListener(topics = "transaction.order.confirm.data", groupId = "wallet-group")
         public void listenOrderConfirmData(OrderComfirmData event) {
-                System.out.println("Received OrderComfirmData event: " + event);
                 handleOrderConfirmDataListener(event);
+        }
+
+        @KafkaListener(topics = "transaction.order.cancel", groupId = "wallet-group")
+        public void listenOrderCancel(OrderCancel event) {
+                handleOrderCancelListener(event);
+        }
+
+        private void handleOrderCancelListener(OrderCancel event) {
+                Payment pay = paymentRepository.findByOrderId(UUID.fromString(event.getOrderId())).getFirst();
+
+                if (pay.getStatus().equals(Status.SUCCESS) || pay.getStatus().equals(Status.CANCELED)) {
+                        return;
+                }
+                pay.setStatus(Status.CANCELED);
+                paymentRepository.save(pay);
+                if (pay.getPaymentMethod().equals(PaymentMethod.WALLET)) {
+                        WalletReservation walletReservation = walletReservationRepository
+                                        .findByOrderId(UUID.fromString(event.getOrderId()))
+                                        .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_SUCCEEDED));
+                        walletReservation.setStatus(Status.CANCELED);
+                        Wallet wallet = walletRepository.findById(walletReservation.getWalletId())
+                                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+                        wallet.setReserved(wallet.getReserved().subtract(walletReservation.getAmount()));
+                        wallet.setBalance(wallet.getBalance().add(walletReservation.getAmount()));
+                        walletRepository.save(wallet);
+                        walletReservationRepository.save(walletReservation);
+
+                        WalletTransaction walletTransaction = WalletTransaction.builder()
+                                        .amount(walletReservation.getAmount())
+                                        .currency(walletReservation.getCurrency())
+                                        .type(PaymentType.ORDER_PAYMENT.toString())
+                                        .walletId(wallet.getId())
+                                        .status(Status.CANCELED)
+                                        .build();
+                        walletTransactionRepository.save(walletTransaction);
+                }
+
         }
 
         private void handleOrderConfirmDataListener(OrderComfirmData event) {
@@ -98,7 +135,11 @@ public class EventListener {
                 if (pay == null) {
                         throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
                 }
+                if (pay.getStatus().equals(Status.SUCCESS) || pay.getStatus().equals(Status.CANCELED)) {
+                        return;
+                }
                 pay.setMetadata(event.getOrderId());
+
                 paymentRepository.save(pay);
                 if (event.getStatus().equals("OK")) {
 
@@ -106,6 +147,7 @@ public class EventListener {
                                 String url = vnpayUltils.payUrl(event.getIp(), pay.getAmount(), pay.getMetadata(),
                                                 pay.getId().toString());
                                 pay.setStatus(Status.PROCESSING);
+
                                 paymentRepository.save(pay);
                                 PayUrlEvent payUrlEvent = PayUrlEvent.builder()
                                                 .orderId(event.getOrderId())
@@ -122,14 +164,25 @@ public class EventListener {
                                                 .status("PENDING")
                                                 .build();
                                 outboxRepository.save(outboxEvent);
+
+                                PaymentAttempt paymentAttempt = new PaymentAttempt();
+                                paymentAttempt.setAttemptData(url);
+                                paymentAttempt.setPaymentId(UUID.fromString(event.getPaymentId()));
+                                paymentAttempt.setStatus(Status.CREATED);
+
+                                paymentAttemptRepository.save(paymentAttempt);
                                 return;
                         }
+
                         WalletReservation walletReservation = walletReservationRepository
                                         .findByOrderId(UUID.fromString(event.getOrderId()))
                                         .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_SUCCEEDED));
                         walletReservation.setStatus(Status.COMPLETED);
                         Wallet wallet = walletRepository.findById(walletReservation.getWalletId())
                                         .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+                        if (wallet.getReserved().compareTo(walletReservation.getAmount()) < 0) {
+                                throw new CustomException(ErrorCode.WALLET_INSUFFICIENT_RESERVED);
+                        }
                         wallet.setReserved(wallet.getReserved().subtract(walletReservation.getAmount()));
 
                         walletRepository.save(wallet);
@@ -160,16 +213,8 @@ public class EventListener {
 
                         outboxRepository.save(outboxEvent);
 
-                        Map<String, Object> jsonMap = new HashMap<>();
-                        jsonMap.put("ip", event.getIp());
-                        jsonMap.put("amount", pay.getAmount());
-                        jsonMap.put("metadata", pay.getMetadata());
-                        jsonMap.put("txnRef", pay.getTxnRef());
-
-                        ObjectMapper mapper = new ObjectMapper();
-                        String jsonString = mapper.writeValueAsString(jsonMap);
                         PaymentAttempt paymentAttempt = new PaymentAttempt();
-                        paymentAttempt.setAttemptData(jsonString);
+                        paymentAttempt.setAttemptData("Wallet payment success");
                         paymentAttempt.setPaymentId(UUID.fromString(event.getPaymentId()));
                         paymentAttempt.setStatus(Status.CREATED);
 

@@ -1,7 +1,8 @@
 package com.chuadatten.transaction.exceptions;
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
+
+import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
@@ -28,6 +29,13 @@ public enum ErrorCode {
     DISPUTE_NOT_FOUND("E036", "Dispute not found", HttpStatus.NOT_FOUND), 
     REFUND_FOR_ORDER_NOT_FOUND("E037", "Refund for order not found", HttpStatus.NOT_FOUND), 
     ORDER_DISPUTE_NOT_FOUND("E038", "Order dispute not found", HttpStatus.NOT_FOUND),
+    
+    // Analytics related errors
+    INVALID_PARAMETER("E039", "Invalid parameter", HttpStatus.BAD_REQUEST),
+    INVALID_DATE_RANGE("E040", "Invalid date range", HttpStatus.BAD_REQUEST),
+    MISSING_REQUIRED_PARAMETER("E041", "Missing required parameter", HttpStatus.BAD_REQUEST),
+    NOT_IMPLEMENTED("E042", "Feature not implemented yet", HttpStatus.NOT_IMPLEMENTED),
+    INTERNAL_SERVER_ERROR("E043", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR),
 
     ;
 
