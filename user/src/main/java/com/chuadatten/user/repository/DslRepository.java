@@ -29,8 +29,8 @@ public class DslRepository {
             where.and(qSellerRating.createdAt.eq(request.getCreatedAt()));
 
         }
-        if (request.getRatingScore() != null) {
-            where.and(qSellerRating.ratingScore.eq(request.getRatingScore()));
+        if (request.getRating() != null) {
+            where.and(qSellerRating.ratingScore.eq(request.getRating()));
 
         }
 

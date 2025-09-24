@@ -16,7 +16,8 @@ public enum Status {
     VERIFIED,
     NONE,
     SUCCESS,
-    RETRY,;
+    RETRY,
+    DELETE_REQUESTED,;
 
 
 }

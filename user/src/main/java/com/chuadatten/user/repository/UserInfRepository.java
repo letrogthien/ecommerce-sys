@@ -17,5 +17,6 @@ public interface UserInfRepository extends JpaRepository<UserInf, UUID> {
     boolean existsByEmail(String email);
     Page<UserInf> findAllByStatus(Status status, Pageable pageable);
     Optional<UserInf> findByDisplayName(String displayName);
-
+    
+    Long countByStatus(Status status);
 }

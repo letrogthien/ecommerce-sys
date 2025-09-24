@@ -1,0 +1,72 @@
+===============================================
+PHÂN TÍCH DB vs ENDPOINTS - ADMIN THIẾU
+===============================================
+
+Dựa trên database schema, đây là các endpoints ADMIN còn thiếu:
+
+🔥 CẦN BỔ SUNG NGAY:
+
+1. QUẢN LÝ AUDIT LOGS
+   ❌ GET /admin/audit-logs - Xem lịch sử hoạt động hệ thống
+   ❌ GET /admin/audit-logs/{userId} - Xem audit logs của user cụ thể
+
+2. QUẢN LÝ LOGIN HISTORY  
+   ❌ GET /admin/login-history - Xem lịch sử đăng nhập toàn hệ thống
+   ❌ GET /admin/login-history/{userId} - Xem login history của user
+
+3. QUẢN LÝ DEVICE MANAGER
+   ❌ GET /admin/devices - Danh sách thiết bị đăng nhập
+   ❌ POST /admin/devices/{deviceId}/revoke - Thu hồi thiết bị
+
+4. QUẢN LÝ KYC/VERIFICATION
+   ❌ GET /admin/kyc/pending - Danh sách KYC chờ duyệt  
+   ❌ POST /admin/kyc/{kycId}/approve - Duyệt KYC
+   ❌ POST /admin/kyc/{kycId}/reject - Từ chối KYC
+   ❌ GET /admin/kyc/delete-requests - Yêu cầu xóa KYC
+
+5. QUẢN LÝ SELLER APPLICATIONS
+   ❌ GET /admin/seller-applications - Danh sách đơn đăng ký seller
+   ❌ POST /admin/seller-applications/{appId}/review - Duyệt đơn seller
+
+6. QUẢN LÝ SELLER RATINGS
+   ❌ GET /admin/seller-ratings - Xem tất cả đánh giá seller
+   ❌ DELETE /admin/seller-ratings/{ratingId} - Xóa đánh giá vi phạm
+
+7. SYSTEM MONITORING  
+   ❌ GET /admin/message-errors - Xem lỗi message queue
+   ❌ GET /admin/outbox-events - Xem outbox events
+
+8. USER ANALYTICS
+   ❌ GET /admin/users/stats - Thống kê user
+   ❌ GET /admin/users/activity-summary - Tổng hợp hoạt động
+
+===============================================
+✅ ĐÃ CÓ (Endpoints hiện tại):
+===============================================
+
+- GET /admin/users - Danh sách users
+- GET /admin/users/{userId} - Chi tiết user  
+- DELETE /admin/users/{userId} - Xóa user
+- POST /admin/users/{userId}/suspend - Suspend user
+- POST /admin/users/{userId}/approve - Duyệt user
+- POST /admin/users/{userId}/reject - Từ chối user
+- POST /admin/users/{userId}/roles - Gán role
+- POST /admin/users/{userId}/seller-status - Đổi trạng thái seller
+
+===============================================
+PRIORITY TRIỂN KHAI:
+===============================================
+
+🔥 Priority 1 (Cần gấp cho AdminUserManagement):
+1. GET /admin/login-history/{userId}
+2. GET /admin/audit-logs/{userId}  
+3. GET /admin/kyc/pending
+
+🔥 Priority 2 (Cần cho AdminSettings):
+4. GET /admin/message-errors
+5. GET /admin/users/stats
+
+🔥 Priority 3 (Tính năng mở rộng):
+6. GET /admin/seller-applications
+7. GET /admin/seller-ratings
+8. POST /admin/devices/{deviceId}/revoke
