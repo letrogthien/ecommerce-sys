@@ -1,13 +1,14 @@
 package com.chuadatten.user.repository;
 
-import com.chuadatten.user.entity.SendMessageError;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.UUID;
+import com.chuadatten.user.entity.SendMessageError;
 
 @Repository
 public interface MessageErrorRepository extends JpaRepository<SendMessageError, UUID> {

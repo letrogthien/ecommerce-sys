@@ -32,6 +32,9 @@ public class ProductVariantServiceImpl implements ProductVariantService {
                                 .attributes(request.getAttributes())
                                 .attributesHash(request.getAttributesHash())
                                 .availableQty(request.getAvailableQty())
+                                .reservedQty(0)
+                                .soldQty(0)
+                                .sku(request.getSku())
                                 .price(request.getPrice())
                                 .productId(request.getProductId())
                                 .status(Status.ACTIVE)
@@ -57,7 +60,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         public ApiResponse<Void> delete(String id, String userId) {
                 ProductVariant productVariant = productVariantRepository.findById(id)
                                 .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_VARIANT_NOT_FOUND));
-                productVariant.setStatus(Status.DELETED);
+                productVariantRepository.delete(productVariant);
                 return ApiResponse.<Void>builder()
                                 .message("delete success")
                                 .build();

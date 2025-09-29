@@ -1,0 +1,301 @@
+1. 	Giới thiệu 
+ 
+Tài liệu này nói về những yêu cầu nghiệp vụ của hệ thống nền tảng giao dịch digital p2p ở mức độ yêu cầu hệ thống.  
+1.1 	Mục tiêu 
+Tài  liệu mô tả đầy đủ các hoạt động của hệ thống p2p.  
+Tài liệu cũng mô tả các yêu cầu phi chức năng, các ràng buộc trong quá trình thiết kế và những nhân tố cần thiết để cung cấp một cái nhìn toàn diện về các yêu cầu phần mềm. 
+1.2 	Phạm vi 
+Cung cấp một đặc tả đầy đủ về yêu cầu chức năng / yêu cầu phi chức năng / yêu cầu đặc biệt có liên quan đến quá trình phát triển và triển khai hệ thống eBookingTour.  
+Người sử dụng tài liệu này có thể là  
+	Người thiết kế kiến trúc hệ thống 
+	Người thiết kế giao diện người dùng 
+	Lập trình viên  
+ 
+2. 	Đặc tả hệ thống Digital P2P
+ 
+Phần này mô tả các yếu tố chung tác động đến những yêu cầu của phần mềm, không đề cập đến chi tiết nền tảng của các yêu cầu (chi tiết các yêu cầu sẽ được mô tả ở phần 3).  
+2.1 	Giới thiệu chung về hệ thống Digital P2P 
+•  Digital P2P là một hệ thống thương mại điện tử chạy trên nền Web đóng vai trò là chợ trung gian (marketplace), cho phép khách hàng (người mua) và người bán giao dịch trực tiếp các sản phẩm kỹ thuật số như: key game, thẻ nạp, gift card, tài khoản dịch vụ trực tuyến, phần mềm bản quyền, và các dịch vụ số khác.
+•  Thay vì bán sản phẩm vật lý, hệ thống tập trung hoàn toàn vào digital goods – nơi giao dịch diễn ra nhanh chóng, an toàn và không cần vận chuyển.
+•  Hệ thống cung cấp cơ chế quản lý gian hàng cho người bán (Seller), giúp họ có thể đăng bán sản phẩm, quản lý tồn kho, xử lý đơn hàng và rút tiền từ ví điện tử sau khi hoàn tất giao dịch.
+•  Đồng thời, hệ thống cung cấp trải nghiệm mua sắm an toàn cho người mua (Buyer) thông qua cơ chế thanh toán đảm bảo (escrow), hỗ trợ khiếu nại và đánh giá người bán.
+•  Ngoài ra, người quản trị (Admin) có quyền giám sát hoạt động trên nền tảng, quản lý sản phẩm, xử lý tranh chấp, quản lý khách hàng và đảm bảo tính minh bạch của hệ thống.
+2.1.1 Phân hệ người dùng (Buyer – Khách hàng tiềm năng)
+Người dùng ở đây là một khách truy cập đang xem các thông tin trên website (không nhất thiết phải có tài khoản trong hệ thống).
+Phân hệ này bao gồm các chức năng sau:
+•	Xem thông tin sản phẩm: Người dùng có thể xem danh mục, chi tiết sản phẩm số (game key, gift card, tài khoản, dịch vụ số…) mà người bán đang đăng tải.
+•	Tìm kiếm sản phẩm: Hỗ trợ tìm kiếm nhanh theo tên sản phẩm, mã sản phẩm, hoặc lọc nâng cao theo giá, loại sản phẩm, người bán, đánh giá.
+•	Thêm vào giỏ hàng: Khi xem thông tin chi tiết sản phẩm, khách hàng có thể chọn mua và thêm vào giỏ hàng.
+•	Quản lý giỏ hàng: Người dùng có thể cập nhật giỏ hàng của mình: thay đổi số lượng, xóa sản phẩm, hoặc xoá toàn bộ giỏ hàng.
+•	Đăng nhập: Sau khi có tài khoản, mỗi người dùng sẽ có tên đăng nhập và mật khẩu để truy cập vào hệ thống và thực hiện mua hàng.
+________________________________________
+2.1.2 Phân hệ Guest
+Phân hệ này gồm 1 chức năng chính:
+•	Đăng ký tài khoản: Khi muốn sử dụng các chức năng nâng cao (mua sản phẩm, lưu giỏ hàng, đánh giá người bán, tham gia khuyến mãi…), khách hàng phải đăng ký tài khoản và cung cấp thông tin cá nhân cơ bản (email, mật khẩu, phương thức thanh toán).
+________________________________________
+2.1.3 Phân hệ khách hàng (Buyer – Người mua)
+Phân hệ này bao gồm các chức năng sau:
+•	Xem và cập nhật thông tin cá nhân: Cho phép khách hàng cập nhật thông tin cá nhân, bảo mật tài khoản, và phương thức thanh toán.
+•	Quản lý đơn hàng: Người mua có thể xem lịch sử các giao dịch, chi tiết đơn hàng, trạng thái giao dịch (đang chờ xử lý, đã giao, hoàn tất, khiếu nại).
+•	Đặt mua sản phẩm: Sau khi chọn sản phẩm và thêm vào giỏ hàng, khách hàng có thể đặt mua và cung cấp thông tin thanh toán.
+•	Thanh toán: Khách hàng có thể chọn hình thức thanh toán an toàn qua ví điện tử, thẻ tín dụng, hoặc cổng thanh toán liên kết. Giao dịch sẽ được xử lý theo cơ chế escrow để bảo vệ cả người mua và người bán.
+•	Khiếu nại & hỗ trợ: Trong trường hợp sản phẩm không hợp lệ, khách hàng có thể gửi khiếu nại, yêu cầu hoàn tiền hoặc hỗ trợ từ quản trị viên.
+•	Đánh giá người bán: Sau khi giao dịch hoàn tất, khách hàng có thể để lại đánh giá và phản hồi về chất lượng sản phẩm/dịch vụ của người bán.
+________________________________________
+2.1.4 Phân hệ người bán (Seller)
+Hệ thống cho phép người bán (là người dùng có đăng ký gian hàng) thực hiện những chức năng sau:
+•	Quản lý gian hàng: Tạo và chỉnh sửa thông tin gian hàng (tên cửa hàng, logo, mô tả, liên hệ).
+•	Đăng sản phẩm: Cho phép người bán đăng sản phẩm mới (ví dụ: game key, gift card, tài khoản), kèm theo mô tả, giá bán, và số lượng tồn kho.
+•	Quản lý sản phẩm: Cập nhật, xóa, hoặc thay đổi trạng thái sản phẩm (hết hàng, tạm dừng bán, hết hạn).
+•	Xử lý đơn hàng: Xem và quản lý các đơn hàng của khách, gửi sản phẩm kỹ thuật số cho người mua thông qua hệ thống.
+•	Quản lý tài chính: Theo dõi doanh thu, lịch sử rút tiền, số dư trong ví. Người bán có thể gửi yêu cầu rút tiền về tài khoản ngân hàng/cổng thanh toán liên kết.
+•	Thống kê bán hàng: Xem báo cáo doanh thu, số lượng sản phẩm đã bán, phản hồi từ người mua.
+________________________________________
+2.1.5 Phân hệ người quản trị (Admin)
+Người quản trị là nhân viên quản lý hệ thống, có quyền cao nhất để giám sát toàn bộ hoạt động. Cụ thể như sau:
+•	Quản lý thông tin nền tảng: Cập nhật thông tin giới thiệu, logo, banner, chính sách bảo mật, điều khoản dịch vụ.
+•	Quản lý tài khoản: Kích hoạt, vô hiệu hóa, hoặc xóa tài khoản người dùng/người bán; quản lý quyền hạn trong hệ thống.
+•	Quản lý sản phẩm & giao dịch: Kiểm duyệt sản phẩm đăng bán, theo dõi đơn hàng, xử lý tranh chấp và khiếu nại.
+•	Quản lý quảng cáo: Cho phép đặt banner, logo quảng cáo của đối tác hoặc người bán nổi bật.
+•	Thống kê & báo cáo: Cung cấp báo cáo doanh thu, số lượng giao dịch, xu hướng bán hàng, và tình hình khiếu nại.
+•	Hệ thống thanh toán & ví: Giám sát hoạt động nạp/rút tiền, đảm bảo an toàn và phòng chống gian lận.
+
+2.2 Một số ký hiệu và định nghĩa
+2.2.1 Một số ký hiệu
+		
+STT	Ký hiệu	Ý nghĩa
+1	A-xx	Ký hiệu tác nhân (Actor). xx → số thứ tự của tác nhân.
+2	UCxx-yyz	Ký hiệu use-case. xx → số thứ tự của phân hệ {0: Guest, 1: Người mua, 2: Người bán, 3: Quản trị viên} yy → số thứ tự chức năng trong phân hệ z → số thứ tự của use case trong chức năng yy
+3	MHxx-yy	Ký hiệu màn hình. xx → số thứ tự phân hệ yy → số thứ tự màn hình trong phân hệ đó
+4	MH00-00	Trang chủ của phân hệ Guest (khách vãng lai)
+5	MH01-00	Trang chủ của phân hệ Người mua
+6	MH02-00	Trang chủ của phân hệ Người bán
+7	MH03-00	Trang chủ của phân hệ Quản trị viên
+
+
+2.2.2 Định nghĩa tác nhân
+1.	A-01 Người dùng
+Là bất kỳ ai sử dụng hệ thống (bao gồm cả Guest, Người mua, và Người bán). Người dùng có thể duyệt web, tìm kiếm sản phẩm, hoặc tham khảo thông tin.
+2.	A-02 Guest (Khách vãng lai)
+Là người dùng chưa có tài khoản hoặc chưa đăng nhập.
+o	Có thể xem thông tin sản phẩm, tìm kiếm, đọc mô tả và đánh giá.
+o	Không thể thực hiện giao dịch mua bán.
+3.	A-03 Người mua (Buyer)
+Là người dùng đã đăng ký tài khoản và được hệ thống kích hoạt.
+o	Có thể nạp tiền, tìm kiếm, mua sản phẩm số (key game, license, tài khoản dịch vụ, v.v.).
+o	Quản lý đơn hàng, lịch sử giao dịch, và gửi đánh giá/feedback cho sản phẩm hoặc người bán.
+4.	A-04 Người bán (Seller)
+Là người dùng đã đăng ký và được hệ thống cấp quyền bán.
+o	Có thể đăng bán sản phẩm số, quản lý kho hàng, đơn hàng, theo dõi doanh thu.
+o	Có thể rút tiền từ ví trong hệ thống về ngân hàng hoặc cổng thanh toán liên kết.
+5.	A-05 Quản trị viên (Admin)
+Là người có quyền cao nhất trong hệ thống.
+o	Quản lý toàn bộ người dùng (kích hoạt, vô hiệu hóa, khóa tài khoản vi phạm).
+o	Kiểm duyệt sản phẩm, xử lý tranh chấp giữa người mua và người bán.
+o	Quản lý danh mục sản phẩm, báo cáo doanh thu, cấu hình hệ thống, và xử lý gian lận.
+6.	A-06 Hệ thống Cổng thanh toán (Payment Gateway, ví điện tử, PayPal, Stripe, MoMo, ZaloPay, …)
+o	Thực hiện xử lý giao dịch thanh toán trực tuyến.
+o	Đảm bảo an toàn cho các giao dịch giữa người mua, người bán và hệ thống.
+7.	A-07 Hệ thống Ngân hàng
+o	Lưu trữ tài khoản thanh toán của người mua, người bán, và công ty.
+o	Liên kết với cổng thanh toán để nạp/rút tiền.
+2.2.3 Định nghĩa các thực thể và tổ hợp thông tin được đề cập trong hệ thống
+1.	I-01 Sản phẩm số (Digital Product)
+Là các sản phẩm kỹ thuật số được giao dịch trong hệ thống (ví dụ: key game, gift card, license phần mềm, tài khoản dịch vụ).
+o	Mỗi sản phẩm có thông tin: loại sản phẩm, nhà phát hành/cung cấp, tình trạng (còn hàng/hết hàng), giá bán, và các thuộc tính riêng (ví dụ: region lock, thời hạn sử dụng).
+o	Người bán là bên đăng tải sản phẩm, giá bán do người bán quy định.
+2.	I-02 Loại sản phẩm (Category)
+o	Mỗi sản phẩm số thuộc về một loại sản phẩm.
+o	Ví dụ: Game Keys, Gift Cards, Subscription Accounts, Software License.
+o	Dùng để phân loại và hỗ trợ tìm kiếm sản phẩm.
+3.	I-03 Đơn hàng (Order)
+o	Là tập hợp một hoặc nhiều sản phẩm số mà người mua đã chọn và tiến hành đặt mua.
+o	Đơn hàng bao gồm: danh sách sản phẩm, số lượng, tổng giá trị, thông tin thanh toán, trạng thái đơn hàng (pending, paid, delivered, completed, refunded).
+4.	I-04 Giỏ hàng (Shopping Cart)
+o	Lưu trữ các sản phẩm mà khách hàng (người mua) đang chọn nhưng chưa tiến hành thanh toán.
+o	Cho phép thêm, xóa, thay đổi số lượng trước khi đặt hàng.
+5.	I-05 Hóa đơn giao dịch (Invoice/Transaction Record)
+o	Là bản ghi chính thức cho mỗi đơn hàng sau khi người mua thanh toán.
+o	Thông tin hóa đơn bao gồm: mã giao dịch, người mua, người bán, sản phẩm, số lượng, thành tiền, phương thức thanh toán, và trạng thái giao dịch.
+6.	I-06 Thông tin người dùng (User Profile)
+o	Bao gồm thông tin tài khoản, thông tin cá nhân, và lịch sử giao dịch.
+o	Có thể là người mua hoặc người bán tùy thuộc vào quyền đã được cấp.
+7.	I-07 Thông tin tài khoản (Account Information)
+o	Bao gồm tên đăng nhập (duy nhất), mật khẩu (được mã hóa), vai trò (buyer, seller, admin).
+8.	I-08 Thông tin cá nhân (Personal Information)
+o	Bao gồm: họ tên, ngày sinh, email, số điện thoại, địa chỉ liên hệ (dùng để xác minh danh tính hoặc hỗ trợ giao dịch).
+9.	I-09 Thông tin thanh toán (Payment Information)
+o	Bao gồm: liên kết ví điện tử, PayPal, thẻ ngân hàng, hoặc tài khoản thanh toán khác.
+o	Dùng để xử lý nạp tiền, mua hàng, và rút tiền cho người bán.
+10.	I-10 Thông tin khuyến mãi / Chiết khấu (Promotion / Discount Information)
+•	Hệ thống có thể triển khai các chương trình khuyến mãi như: mã giảm giá, điểm thưởng, voucher.
+•	Người mua có thể sử dụng để giảm giá trị đơn hàng trong quá trình thanh toán.
+11.	I-11 Thông tin công ty (Company Information)
+•	Bao gồm: tên công ty vận hành hệ thống, địa chỉ, logo, thông tin liên hệ, email quản trị, chính sách giao dịch và điều khoản sử dụng.
+12.	I-12 Thông tin quảng cáo / Đối tác (Advertisement / Partner Information)
+•	Hệ thống có thể đặt logo hoặc banner quảng cáo cho đối tác.
+•	Thông tin bao gồm: logo, tên công ty đối tác, website, vị trí hiển thị quảng cáo trên nền tảng.
+2.3 Danh sách các Use-Case của hệ thống Digital P2P
+________________________________________
+2.3.1 Phân hệ Người dùng (End-User / Buyer)
+1.	UC01-010 / Đăng ký tài khoản
+2.	UC01-020 / Đăng nhập hệ thống
+3.	UC01-030 / Quản lý mật khẩu (Đổi, Quên, Reset)
+4.	UC01-040 / Quản lý hồ sơ cá nhân (Xem, cập nhật, avatar, địa chỉ thanh toán)
+5.	UC01-050 / Quản lý tuỳ chọn cá nhân (User Preferences, Settings)
+6.	UC01-060 / Quản lý bảo mật (2FA, OTP, đăng xuất phiên, refresh token)
+________________________________________
+2.3.2 Phân hệ Sản phẩm (Catalog / Seller)
+1.	UC02-010 / Xem danh sách sản phẩm
+2.	UC02-020 / Xem chi tiết sản phẩm
+3.	UC02-030 / Thêm sản phẩm mới (Seller)
+4.	UC02-040 / Cập nhật sản phẩm (Seller)
+5.	UC02-050 / Xoá sản phẩm (Seller)
+6.	UC02-060 / Quản lý hình ảnh sản phẩm
+7.	UC02-070 / Quản lý biến thể sản phẩm (thêm, sửa, xoá, liệt kê)
+8.	UC02-080 / Quản lý tồn kho (đặt giữ, huỷ giữ, trừ kho khi thanh toán)
+9.	UC02-090 / Quản lý danh mục sản phẩm (Admin)
+________________________________________
+2.3.3 Phân hệ Giỏ hàng & Đặt hàng (Buyer / Seller)
+1.	UC03-010 / Tạo đơn hàng
+2.	UC03-020 / Xem đơn hàng (chi tiết, lịch sử)
+3.	UC03-030 / Huỷ đơn hàng
+4.	UC03-040 / Theo dõi trạng thái đơn hàng
+5.	UC03-050 / Xử lý đơn hàng (Seller xác nhận, fulfilment)
+6.	UC03-060 / Upload bằng chứng giao hàng
+7.	UC03-070 / Quản lý tranh chấp & hoàn tiền
+________________________________________
+2.3.4 Phân hệ Thanh toán & Ví điện tử
+1.	UC04-010 / Tạo ví điện tử (tự động khi user đăng ký)
+2.	UC04-020 / Xem số dư, lịch sử giao dịch
+3.	UC04-030 / Nạp tiền / Thanh toán bằng ví
+4.	UC04-040 / Thanh toán qua cổng VNPAY
+5.	UC04-050 / Theo dõi trạng thái thanh toán
+6.	UC04-060 / Rút tiền về tài khoản ngân hàng
+7.	UC04-070 / Quản lý tài khoản ngân hàng liên kết
+________________________________________
+2.3.5 Phân hệ Thông báo (Notification)
+1.	UC05-010 / Nhận email xác nhận đăng ký
+2.	UC05-020 / Nhận email reset mật khẩu
+3.	UC05-030 / Nhận OTP 2FA
+4.	UC05-040 / Nhận cảnh báo bảo mật (login từ thiết bị mới)
+5.	UC05-050 / Nhận URL thanh toán real-time qua WebSocket
+6.	UC05-060 / Nhận thông báo đơn hàng/thanh toán real-time
+________________________________________
+2.3.6 Phân hệ Quản trị (Admin)
+1.	UC06-010 / Quản lý người dùng (duyệt, khoá, xoá, reset)
+2.	UC06-020 / Quản lý sản phẩm (giám sát, duyệt)
+3.	UC06-030 / Giám sát giao dịch & hệ thống
+________________________________________
+2.3.7 Phân hệ KYC & Người bán
+1.	UC07-010 / Gửi thông tin định danh (KYC)
+2.	UC07-020 / Đăng ký trở thành người bán (Seller Application)
+3.	UC07-030 / Quản lý trạng thái duyệt hồ sơ KYC (Admin)
+
+2.4 	Đặc tả chi tiết Use-Case 
+Xem tập tin Use Case Spec.pdf 
+3. 	Yêu cầu của hệ thống Digital P2P 
+-	Dễ dàng cho việc thay đổi cấu hình hệ thống: cấu hình cơ sở dữ liệu, ... 
+-	Giao diện thống nhất giữa các trang trong website 
+-	Giao diện đẹp, hài hòa 
+-	Mã nguồn được tổ chức có khoa học 
+ 
+3.3 	Các yêu cầu khác 
+3.3.1 Công nghệ 
+1	Kiến trúc 
+	Ứng dụng được xây dựng là 1 Web Application với các thành phần như hình vẽ sau: 
+ 
+ 
+2	Mô hình cài đặt 
+	Hệ thống được xây dựng theo mô hình 3-tầng: tầng giao diện, tầng nghiệp vụ và tầng dữ liệu.   
+3	Ngôn ngữ lập trình 
+	Java là ngôn ngữ chính để phát triển Digital P2P.   
+4	Lưu trữ 
+.properties	 	 
+	-	Thông tin config
+	- 	Kết nối csdl, messagequeu, payment
+MySQL 	- 	Các thông tin relationship
+
+MongoDb	-
+-	Lưu trữ thông tin product-Service
+Lưu log, audit
+Kafka	-	Lưu trữ, vận chuyển message, event
+
+5	Web part 
+	Sử dụng web part trong trang chủ của phân hệ người quản trị cho phép người quản trị thực hiện nhanh một số chức năng của hệ thống. 
+6	Web Server 
+•  Hệ thống được phát triển dựa trên Spring Boot Framework (Java).
+•  Spring Boot sử dụng web server nhúng (Embedded Tomcat), có thể thay thế bằng Jetty hoặc Undertow khi cần.
+•  Hệ thống có thể chạy độc lập (standalone JAR) mà không cần cài đặt web server ngoài.
+•  Đối với môi trường triển khai thực tế:
+•	Có thể chạy trực tiếp trên Linux VPS.
+•	Có thể đóng gói dưới dạng Docker container để dễ dàng mở rộng (scaling).
+•	Có thể tích hợp Nginx/Apache HTTPD như reverse proxy để hỗ trợ cân bằng tải (load balancing), HTTPS (SSL/TLS termination) và bảo mật.
+
+3.3.2	Chính sách bảo mật 
+1	Kỹ thuật bảo mật 
+	Các kết nối từ người dùng đến máy chủ đều phải thiết lập nghi thức SSL. 
+	Dữ liệu nhạy cảm truyền trên Internet và lưu xuống dữ liệu phải được mã hóa bằng các thuật toán băm họ SHA và các thuật toán mã hóa công khai khác. 
+2	Chứng thực người dùng
+•	Người dùng cần đăng nhập trước khi sử dụng các chức năng yêu cầu xác thực.
+•	Khi đăng nhập thành công, hệ thống phát hành JWT (JSON Web Token) chứa thông tin nhận dạng và quyền hạn của người dùng.
+•	JWT được lưu trữ trong Cookie HttpOnly, Secure để tránh truy cập trái phép từ JavaScript và đảm bảo an toàn khi truyền qua HTTPS.
+•	Thời hạn hiệu lực của JWT (Access Token) mặc định là 3 giờ. Sau thời gian này, người dùng phải đăng nhập lại hoặc sử dụng Refresh Token (nếu được cấp) để lấy token mới.
+•	Khi người dùng chọn đăng xuất, hệ thống sẽ:
+o	Xóa Cookie chứa JWT.
+o	Vô hiệu hóa token trong hệ thống (nếu có cơ chế blacklist/whitelist).
+•	Cơ chế bảo mật bổ sung:
+o	Hệ thống kiểm tra tính toàn vẹn chữ ký JWT bằng thuật toán (HS256/RS256).
+o	Hệ thống có thể áp dụng 2FA (Two-Factor Authentication) cho các tác vụ nhạy cảm.
+
+4. 	Phụ lục 1: Các hệ thống có liên kết với Digital P2P 
+ 
+4.1 	Hệ thống vnpay 
+5. 	Phụ lục 2: Danh sách các màn hình (tham khảo ở UI Spec) 
+ 
+
+Phân hệ	Use Case (UC)	Màn hình (MH)
+Người dùng (End-User / Buyer)	UC01-010: Đăng ký tài khoản	MH01-01-1 – Đăng ký
+	UC01-020: Đăng nhập hệ thống	MH01-01-2 – Đăng nhập
+	UC01-030: Quản lý mật khẩu (quên/reset/đổi)	MH01-01-3 – Quên mật khẩu, MH01-02-3 – Đổi mật khẩu
+	UC01-040: Quản lý hồ sơ cá nhân	MH01-02-1 – Hồ sơ cá nhân, MH01-02-2 – Cập nhật thông tin
+	UC01-050: Quản lý tuỳ chọn cá nhân	MH01-02-4 – Cài đặt tuỳ chọn
+	UC01-060: Quản lý bảo mật (2FA, OTP, logout session)	MH01-01-4 – Xác thực OTP / 2FA
+Sản phẩm (Catalog / Seller)	UC02-010: Xem danh sách sản phẩm	MH02-01-1 – Danh sách sản phẩm
+	UC02-020: Xem chi tiết sản phẩm	MH02-01-2 – Chi tiết sản phẩm
+	UC02-030: Thêm sản phẩm mới	MH02-02-1 – Thêm sản phẩm
+	UC02-040: Cập nhật sản phẩm	MH02-02-2 – Cập nhật sản phẩm
+	UC02-050: Xoá sản phẩm	MH02-02-2 – Cập nhật sản phẩm
+	UC02-060: Quản lý hình ảnh sản phẩm	MH02-02-3 – Quản lý hình ảnh
+	UC02-070: Quản lý biến thể sản phẩm	MH02-02-4 – Quản lý biến thể
+	UC02-080: Quản lý tồn kho	MH02-02-5 – Quản lý tồn kho
+	UC02-090: Quản lý danh mục sản phẩm (Admin)	MH02-03-1 – Quản lý danh mục
+Giỏ hàng & Đặt hàng	UC03-010: Tạo đơn hàng	MH03-02-1 – Tạo đơn hàng
+	UC03-020: Xem đơn hàng (chi tiết, lịch sử)	MH03-02-2 – Chi tiết đơn hàng, MH03-02-3 – Danh sách đơn hàng đã đặt
+	UC03-030: Huỷ đơn hàng	MH03-02-5 – Huỷ đơn hàng
+	UC03-040: Theo dõi trạng thái đơn hàng	MH03-03-1 – Trạng thái đơn hàng
+	UC03-050: Xử lý đơn hàng (Seller fulfilment)	MH03-02-4 – Danh sách đơn hàng chờ xử lý
+	UC03-060: Upload bằng chứng giao hàng	MH03-03-2 – Upload bằng chứng
+	UC03-070: Quản lý tranh chấp & hoàn tiền	MH03-03-3 – Tranh chấp & hoàn tiền
+Thanh toán & Ví điện tử	UC04-010: Tạo ví điện tử	MH04-00 – Trang ví
+	UC04-020: Xem số dư, lịch sử giao dịch	MH04-01-1 – Số dư & lịch sử
+	UC04-030: Nạp tiền / Thanh toán bằng ví	MH04-01-2 – Nạp tiền, MH04-01-4 – Thanh toán bằng ví
+	UC04-040: Thanh toán qua VNPAY	MH04-01-5 – Thanh toán VNPAY
+	UC04-050: Theo dõi trạng thái thanh toán	MH04-01-4 / MH04-01-5 – Trạng thái thanh toán
+	UC04-060: Rút tiền về ngân hàng	MH04-01-3 – Rút tiền
+	UC04-070: Quản lý tài khoản ngân hàng liên kết	MH04-01-6 – Ngân hàng liên kết
+Thông báo (Notification)	UC05-010: Nhận email xác nhận đăng ký	MH05-01-2 – Email xác nhận
+	UC05-020: Nhận email reset mật khẩu	MH05-01-2 – Email reset
+	UC05-030: Nhận OTP 2FA	MH01-01-4 – OTP 2FA
+	UC05-040: Nhận cảnh báo bảo mật	MH05-01-4 – Cảnh báo bảo mật
+	UC05-050: Nhận URL thanh toán real-time	MH05-01-3 – Thông báo real-time
+	UC05-060: Nhận thông báo đơn hàng/thanh toán	MH05-01-1 – Notification Center
+Quản trị (Admin)	UC06-010: Quản lý người dùng	MH06-01-1 – Danh sách user, MH06-01-2 – Chi tiết user
+	UC06-020: Quản lý sản phẩm (duyệt)	MH06-02-1 – Quản lý sản phẩm
+	UC06-030: Giám sát giao dịch & hệ thống	MH06-03-1 – Giám sát giao dịch
+	UC06-031: Thống kê doanh thu theo sản phẩm	MH06-03-2 – Thống kê theo sản phẩm
+	UC06-032: Thống kê doanh thu toàn hệ thống	MH06-03-3 – Thống kê toàn hệ thống
+KYC & Người bán	UC07-010: Gửi thông tin định danh (KYC)	MH07-01-1 – Gửi KYC
+	UC07-020: Đăng ký trở thành người bán	MH07-02-1 – Đăng ký Seller
+	UC07-030: Quản lý trạng thái duyệt hồ sơ KYC (Admin)	MH07-02-2 – Quản lý trạng thái KYC
+

@@ -39,6 +39,8 @@ public class Security {
             .requestMatchers(HttpMethod.GET, "/api/v1/product-service/products/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/product-service/categories/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/product-service/product-variants/**").permitAll()
+            .requestMatchers("/api/v1/product-service/search/**").permitAll()
+            .requestMatchers("/files/**").permitAll()
 
             // --- USER ---
             .requestMatchers(HttpMethod.POST, "/api/v1/product-service/product-variants/*/reserve").hasAuthority(RoleName.ROLE_USER.name())

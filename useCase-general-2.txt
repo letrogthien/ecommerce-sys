@@ -1,0 +1,551 @@
+2.10 Phân hệ Quản lý đơn hàng (Order Service)
+
+2.10.1 UC10-010 / Tạo đơn hàng mới
+
+a) Điều kiện tiên quyết:
+• Người mua đã đăng nhập vào hệ thống.
+• Có sản phẩm và biến thể hợp lệ để đặt hàng.
+
+b) Luồng sự kiện chi tiết:
+1. Người mua truy cập màn hình tạo đơn hàng, nhập thông tin sản phẩm, số lượng, địa chỉ, phương thức thanh toán.
+2. Hệ thống nhận request, kiểm tra hợp lệ sellerId, buyerId, tổng tiền, currency, danh sách items.
+3. Hệ thống tạo mới đơn hàng với trạng thái PENDING, lưu vào DB.
+4. Tạo các OrderItem cho từng sản phẩm/biến thể, lưu vào DB.
+5. Sinh event OrderCreatedEvent, lưu vào bảng Outbox để xử lý bất đồng bộ (Kafka).
+   - Event `ORDER_CREATED` (topic: transaction.order.created, producer: transaction service) sẽ được gửi lên Kafka để các service khác xử lý tiếp (consumer: product, wallet, notify).
+6. Sau khi đặt giữ sản phẩm:
+   - Nếu thành công (`PRODUCT_RESERVATION_SUCCESS`, topic: product.reservation.success), product service gửi event lên Kafka, transaction service nhận event, cập nhật giá chuẩn, trạng thái đơn hàng sang `READY_PAY`, sinh event xác nhận dữ liệu đơn hàng (`ORDER_COMFIRM_DATA`, topic: transaction.order.confirm.data).
+   - Nếu thất bại (`PRODUCT_RESERVATION_FAILED`, topic: product.reservation.failed), product service gửi event lên Kafka, transaction service nhận event, cập nhật trạng thái đơn hàng sang `CANCELLED`.
+7. Khi xác nhận dữ liệu đơn hàng, event `ORDER_COMFIRM_DATA` được gửi lên Kafka, wallet service nhận event để chuẩn bị giao dịch thanh toán.
+8. Khi bắt đầu thanh toán, wallet service gửi event `PAYMENT_PROCECSSING` (topic: payment.payment.processing) lên Kafka, các service liên quan xử lý trạng thái giao dịch, kiểm tra số dư ví, sinh URL thanh toán nếu qua VNPAY.
+9. Khi thanh toán thành công, event `PAYMENT_SUCCESS` (topic: payment.success) được gửi lên Kafka, transaction service nhận event, cập nhật trạng thái đơn hàng sang `PAID`, trạng thái thanh toán sang `SUCCESS`.
+10. Các event khác như `ORDER_CANCEL`, `ORDER_SUCCESS`, `PAYMENT_URL_SUCCESS`, ... cũng được gửi/lắng nghe giữa các service để đảm bảo workflow nghiệp vụ xuyên suốt.
+11. Trả về thông tin đơn hàng vừa tạo cho người mua.
+12. Nếu có lỗi, trả về thông báo lỗi rõ ràng.
+
+c) Màn hình liên quan:
+- MH10-01-01 – Tạo đơn hàng
+
+d) Điều kiện kết thúc Use Case:
+- Đơn hàng được tạo thành công, trạng thái PENDING.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra hợp lệ dữ liệu đầu vào, xử lý bất đồng bộ event, tối ưu lưu trữ OrderItem, tracking event log.
+
+2.10.2 UC10-020 / Xem chi tiết đơn hàng
+
+a) Điều kiện tiên quyết:
+• Người mua đã đăng nhập vào hệ thống.
+• Đơn hàng tồn tại và thuộc về người mua.
+
+b) Luồng sự kiện chi tiết:
+1. Người mua truy cập màn hình chi tiết đơn hàng, nhập orderId.
+2. Hệ thống kiểm tra quyền truy cập (buyerId phải trùng với userId).
+3. Truy vấn thông tin đơn hàng từ DB, trả về dữ liệu chi tiết.
+4. Nếu không có quyền hoặc không tìm thấy đơn hàng, trả về lỗi.
+
+c) Màn hình liên quan:
+- MH10-01-02 – Chi tiết đơn hàng
+
+d) Điều kiện kết thúc Use Case:
+- Người mua nhận được thông tin chi tiết đơn hàng.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra quyền truy cập, xử lý lỗi rõ ràng.
+
+2.10.3 UC10-030 / Xem danh sách đơn hàng theo người mua/người bán
+
+a) Điều kiện tiên quyết:
+• Người mua/người bán đã đăng nhập vào hệ thống.
+
+b) Luồng sự kiện chi tiết:
+1. Người dùng truy cập màn hình danh sách đơn hàng, chọn vai trò (buyer/seller), trạng thái, phân trang.
+2. Hệ thống truy vấn danh sách đơn hàng theo buyerId hoặc sellerId, trả về dữ liệu phân trang.
+3. Trả về danh sách đơn hàng cho người dùng.
+
+c) Màn hình liên quan:
+- MH10-01-03 – Danh sách đơn hàng
+
+d) Điều kiện kết thúc Use Case:
+- Người dùng nhận được danh sách đơn hàng theo vai trò và trạng thái đã chọn.
+
+e) Một số yêu cầu/challenge:
+- Tối ưu truy vấn phân trang, lọc theo trạng thái, kiểm tra quyền truy cập.
+
+2.10.4 UC10-040 / Huỷ đơn hàng
+
+a) Điều kiện tiên quyết:
+• Người mua đã đăng nhập vào hệ thống.
+• Đơn hàng ở trạng thái chưa thanh toán hoặc chưa hoàn thành.
+
+b) Luồng sự kiện chi tiết:
+1. Người mua truy cập màn hình chi tiết đơn hàng, chọn chức năng huỷ đơn.
+2. Hệ thống kiểm tra trạng thái đơn hàng (không phải PAID, COMPLETED, PAYING).
+3. Sinh event OrderCancel, lưu vào bảng Outbox để xử lý bất đồng bộ (Kafka).
+   - Event `ORDER_CANCEL` sẽ được gửi lên Kafka để các service khác xử lý (hoàn trả tồn kho, cập nhật trạng thái liên quan).
+4. Các event khác như kiểm tra hoàn trả (`CHECKING_ORDER_RETURN`), hoàn thành đơn hàng (`ORDER_SUCCESS`), dọn dẹp đơn hàng (`CLEAN_UP_ORDER`) cũng được xử lý qua Kafka để đảm bảo tính nhất quán và mở rộng hệ thống.
+5. Cập nhật trạng thái đơn hàng sang CANCELLED, lưu vào DB.
+6. Trả về thông tin đơn hàng đã huỷ cho người mua.
+7. Nếu không hợp lệ, trả về lỗi rõ ràng.
+
+c) Màn hình liên quan:
+- MH10-01-04 – Huỷ đơn hàng
+
+d) Điều kiện kết thúc Use Case:
+- Đơn hàng được huỷ thành công, trạng thái CANCELLED.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra trạng thái hợp lệ, xử lý event bất đồng bộ, kiểm tra quyền truy cập.
+
+2.10.5 UC10-050 / Upload bằng chứng giao hàng
+
+a) Điều kiện tiên quyết:
+• Người bán đã đăng nhập vào hệ thống.
+• Đơn hàng ở trạng thái PAID.
+
+b) Luồng sự kiện chi tiết:
+1. Người bán truy cập màn hình upload bằng chứng giao hàng, chọn file ảnh, nhập ghi chú.
+2. Hệ thống kiểm tra trạng thái đơn hàng (phải là PAID).
+3. Lưu file bằng chứng lên hệ thống, tạo OrderProof với thông tin file, sellerId, note, type.
+4. Cập nhật trạng thái đơn hàng sang DELIVERED, lưu vào DB.
+5. Trả về thông tin đơn hàng đã cập nhật cho người bán.
+6. Nếu không hợp lệ, trả về lỗi rõ ràng.
+
+c) Màn hình liên quan:
+- MH10-01-05 – Upload bằng chứng giao hàng
+
+d) Điều kiện kết thúc Use Case:
+- Đơn hàng được cập nhật trạng thái DELIVERED, bằng chứng được lưu thành công.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra trạng thái hợp lệ, xử lý upload file, bảo mật file lưu trữ.
+
+2.10.6 UC10-060 / Mở khiếu nại đơn hàng
+
+a) Điều kiện tiên quyết:
+• Người mua đã đăng nhập vào hệ thống.
+• Đơn hàng tồn tại và thuộc về người mua.
+• Đơn hàng chưa bị khiếu nại trước đó.
+
+b) Luồng sự kiện chi tiết:
+1. Người mua truy cập màn hình khiếu nại đơn hàng, nhập lý do, mô tả, chọn loại vấn đề (issueType).
+2. Hệ thống kiểm tra quyền truy cập (buyerId phải trùng với userId), kiểm tra đơn hàng chưa bị khiếu nại trước đó.
+3. Tạo mới bản ghi khiếu nại (OrderDispute) với trạng thái OPENED, lưu vào DB.
+4. Trả về thông tin khiếu nại vừa tạo cho người mua.
+5. Nếu không hợp lệ, trả về lỗi rõ ràng (đã khiếu nại, không có quyền, không tìm thấy đơn hàng).
+
+c) Màn hình liên quan:
+- MH10-01-06 – Khiếu nại đơn hàng
+
+d) Điều kiện kết thúc Use Case:
+- Khiếu nại được mở thành công, trạng thái OPENED.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra quyền truy cập, kiểm tra trạng thái khiếu nại, validate dữ liệu đầu vào.
+
+
+2.10.7 UC10-070 / Xem chi tiết khiếu nại đơn hàng
+
+a) Điều kiện tiên quyết:
+• Người mua đã đăng nhập vào hệ thống.
+• Đơn hàng đã bị khiếu nại.
+
+b) Luồng sự kiện chi tiết:
+1. Người mua truy cập màn hình chi tiết khiếu nại, nhập orderId.
+2. Hệ thống truy vấn thông tin khiếu nại theo orderId, trả về dữ liệu chi tiết.
+3. Nếu không tìm thấy khiếu nại, trả về lỗi rõ ràng.
+
+c) Màn hình liên quan:
+- MH10-01-07 – Chi tiết khiếu nại đơn hàng
+
+d) Điều kiện kết thúc Use Case:
+- Người mua nhận được thông tin chi tiết khiếu nại.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra trạng thái khiếu nại, xử lý lỗi rõ ràng.
+
+
+2.10.8 UC10-080 / Cập nhật trạng thái khiếu nại đơn hàng
+
+a) Điều kiện tiên quyết:
+• Người mở khiếu nại hoặc quản trị viên đã đăng nhập vào hệ thống.
+• Khiếu nại tồn tại.
+
+b) Luồng sự kiện chi tiết:
+1. Người dùng truy cập màn hình cập nhật khiếu nại, nhập disputeId, trạng thái mới.
+2. Hệ thống kiểm tra quyền cập nhật (chỉ người mở khiếu nại hoặc admin), kiểm tra trạng thái hợp lệ.
+3. Cập nhật trạng thái khiếu nại, lưu vào DB.
+4. Trả về thông tin khiếu nại đã cập nhật.
+5. Nếu không hợp lệ, trả về lỗi rõ ràng.
+
+c) Màn hình liên quan:
+- MH10-01-08 – Cập nhật trạng thái khiếu nại
+
+d) Điều kiện kết thúc Use Case:
+- Trạng thái khiếu nại được cập nhật thành công.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra quyền cập nhật, validate trạng thái, xử lý lỗi rõ ràng.
+
+
+2.10.9 UC10-090 / Xem danh sách khiếu nại đơn hàng
+
+a) Điều kiện tiên quyết:
+• Người dùng đã đăng nhập vào hệ thống.
+
+b) Luồng sự kiện chi tiết:
+1. Người dùng truy cập màn hình danh sách khiếu nại, chọn trạng thái, loại vấn đề, phân trang.
+2. Hệ thống truy vấn danh sách khiếu nại theo trạng thái, loại vấn đề, trả về dữ liệu phân trang.
+3. Trả về danh sách khiếu nại cho người dùng.
+
+c) Màn hình liên quan:
+- MH10-01-09 – Danh sách khiếu nại đơn hàng
+
+d) Điều kiện kết thúc Use Case:
+- Người dùng nhận được danh sách khiếu nại theo tiêu chí đã chọn.
+
+e) Một số yêu cầu/challenge:
+- Tối ưu truy vấn phân trang, lọc theo trạng thái, loại vấn đề.
+
+
+2.10.10 UC10-100 / Yêu cầu hoàn tiền đơn hàng
+
+a) Điều kiện tiên quyết:
+• Người mua đã đăng nhập vào hệ thống.
+• Đơn hàng tồn tại và thuộc về người mua.
+
+b) Luồng sự kiện chi tiết:
+1. Người mua truy cập màn hình yêu cầu hoàn tiền, nhập lý do hoàn tiền.
+2. Hệ thống kiểm tra quyền truy cập (buyerId phải trùng với userId), kiểm tra đơn hàng hợp lệ.
+3. Tạo mới bản ghi hoàn tiền (OrderRefund) với trạng thái REQUESTED, lưu vào DB.
+4. Trả về thông tin yêu cầu hoàn tiền vừa tạo cho người mua.
+5. Nếu không hợp lệ, trả về lỗi rõ ràng (không có quyền, không tìm thấy đơn hàng).
+
+c) Màn hình liên quan:
+- MH10-01-10 – Yêu cầu hoàn tiền
+
+d) Điều kiện kết thúc Use Case:
+- Yêu cầu hoàn tiền được ghi nhận thành công, trạng thái REQUESTED.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra quyền truy cập, validate dữ liệu đầu vào.
+
+
+2.10.11 UC10-110 / Xem trạng thái hoàn tiền đơn hàng
+
+a) Điều kiện tiên quyết:
+• Người mua đã đăng nhập vào hệ thống.
+• Đã từng yêu cầu hoàn tiền cho đơn hàng.
+
+b) Luồng sự kiện chi tiết:
+1. Người mua truy cập màn hình trạng thái hoàn tiền, nhập orderId.
+2. Hệ thống truy vấn thông tin hoàn tiền theo orderId và buyerId, trả về dữ liệu trạng thái.
+3. Nếu không tìm thấy yêu cầu hoàn tiền, trả về lỗi rõ ràng.
+
+c) Màn hình liên quan:
+- MH10-01-11 – Trạng thái hoàn tiền đơn hàng
+
+d) Điều kiện kết thúc Use Case:
+- Người mua nhận được trạng thái hoàn tiền đơn hàng.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra quyền truy cập, xử lý lỗi rõ ràng.
+
+
+2.10.12 UC10-120 / Xem danh sách hoàn tiền đơn hàng
+
+a) Điều kiện tiên quyết:
+• Người mua đã đăng nhập vào hệ thống.
+
+b) Luồng sự kiện chi tiết:
+1. Người mua truy cập màn hình danh sách hoàn tiền, chọn trạng thái, phân trang.
+2. Hệ thống truy vấn danh sách hoàn tiền theo buyerId, trả về dữ liệu phân trang.
+3. Trả về danh sách hoàn tiền cho người mua.
+
+c) Màn hình liên quan:
+- MH10-01-12 – Danh sách hoàn tiền đơn hàng
+
+d) Điều kiện kết thúc Use Case:
+- Người mua nhận được danh sách hoàn tiền theo tiêu chí đã chọn.
+
+e) Một số yêu cầu/challenge:
+- Tối ưu truy vấn phân trang, lọc theo trạng thái.
+
+2.11 Phân hệ Quản trị ví & thanh toán
+
+2.11.1 UC11-010 / Quản trị viên xem danh sách ví người dùng
+
+a) Điều kiện tiên quyết:
+• Quản trị viên đã đăng nhập vào hệ thống.
+
+b) Luồng sự kiện chi tiết:
+1. Quản trị viên truy cập màn hình quản lý ví, nhập bộ lọc (userId, currency, trạng thái, số dư tối thiểu/tối đa).
+2. Hệ thống truy vấn danh sách ví theo bộ lọc, phân trang, trả về dữ liệu.
+3. Trả về danh sách ví cho quản trị viên.
+
+c) Màn hình liên quan:
+- MH11-01-01 – Quản lý ví
+
+d) Điều kiện kết thúc Use Case:
+- Quản trị viên nhận được danh sách ví theo tiêu chí đã chọn.
+
+e) Một số yêu cầu/challenge:
+- Tối ưu truy vấn, lọc động, phân trang.
+
+
+2.11.2 UC11-020 / Quản trị viên thay đổi trạng thái ví
+
+a) Điều kiện tiên quyết:
+• Quản trị viên đã đăng nhập vào hệ thống.
+• Ví tồn tại.
+
+b) Luồng sự kiện chi tiết:
+1. Quản trị viên truy cập màn hình chi tiết ví, chọn trạng thái mới.
+2. Hệ thống kiểm tra ví tồn tại, cập nhật trạng thái, lưu thời gian cập nhật.
+3. Trả về thông tin ví đã cập nhật cho quản trị viên.
+
+c) Màn hình liên quan:
+- MH11-01-02 – Thay đổi trạng thái ví
+
+d) Điều kiện kết thúc Use Case:
+- Trạng thái ví được cập nhật thành công.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra trạng thái hợp lệ, lưu lịch sử cập nhật.
+
+
+2.11.3 UC11-030 / Quản trị viên xem danh sách giao dịch thanh toán
+
+a) Điều kiện tiên quyết:
+• Quản trị viên đã đăng nhập vào hệ thống.
+
+b) Luồng sự kiện chi tiết:
+1. Quản trị viên truy cập màn hình quản lý giao dịch, nhập bộ lọc (userId, trạng thái, orderId, số tiền, ngày tạo).
+2. Hệ thống truy vấn danh sách giao dịch theo bộ lọc, phân trang, trả về dữ liệu.
+3. Trả về danh sách giao dịch cho quản trị viên.
+
+c) Màn hình liên quan:
+- MH11-01-03 – Quản lý giao dịch thanh toán
+
+d) Điều kiện kết thúc Use Case:
+- Quản trị viên nhận được danh sách giao dịch theo tiêu chí đã chọn.
+
+e) Một số yêu cầu/challenge:
+- Tối ưu truy vấn, lọc động, phân trang.
+
+
+2.11.4 UC11-040 / Quản trị viên xem danh sách yêu cầu rút tiền
+
+a) Điều kiện tiên quyết:
+• Quản trị viên đã đăng nhập vào hệ thống.
+
+b) Luồng sự kiện chi tiết:
+1. Quản trị viên truy cập màn hình quản lý rút tiền, nhập bộ lọc (userId, trạng thái, số tiền, ngày tạo).
+2. Hệ thống truy vấn danh sách yêu cầu rút tiền theo bộ lọc, phân trang, trả về dữ liệu.
+3. Trả về danh sách yêu cầu rút tiền cho quản trị viên.
+
+c) Màn hình liên quan:
+- MH11-01-04 – Quản lý yêu cầu rút tiền
+
+d) Điều kiện kết thúc Use Case:
+- Quản trị viên nhận được danh sách yêu cầu rút tiền theo tiêu chí đã chọn.
+
+e) Một số yêu cầu/challenge:
+- Tối ưu truy vấn, lọc động, phân trang.
+
+
+2.11.5 UC11-050 / Quản trị viên duyệt yêu cầu rút tiền
+
+a) Điều kiện tiên quyết:
+• Quản trị viên đã đăng nhập vào hệ thống.
+• Yêu cầu rút tiền ở trạng thái PENDING.
+
+b) Luồng sự kiện chi tiết:
+1. Quản trị viên truy cập màn hình chi tiết yêu cầu rút tiền, nhấn "Duyệt".
+2. Hệ thống kiểm tra trạng thái, cập nhật sang APPROVED, lưu thời gian cập nhật.
+3. Trả về thông tin yêu cầu rút tiền đã duyệt.
+
+c) Màn hình liên quan:
+- MH11-01-05 – Duyệt yêu cầu rút tiền
+
+d) Điều kiện kết thúc Use Case:
+- Yêu cầu rút tiền được duyệt thành công.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra trạng thái hợp lệ, lưu lịch sử duyệt.
+
+
+2.11.6 UC11-060 / Quản trị viên từ chối yêu cầu rút tiền
+
+a) Điều kiện tiên quyết:
+• Quản trị viên đã đăng nhập vào hệ thống.
+• Yêu cầu rút tiền ở trạng thái PENDING.
+
+b) Luồng sự kiện chi tiết:
+1. Quản trị viên truy cập màn hình chi tiết yêu cầu rút tiền, nhập lý do từ chối, nhấn "Từ chối".
+2. Hệ thống kiểm tra trạng thái, cập nhật sang REJECTED, lưu lý do từ chối vào metadata, lưu thời gian cập nhật.
+3. Trả về thông tin yêu cầu rút tiền đã từ chối.
+
+c) Màn hình liên quan:
+- MH11-01-06 – Từ chối yêu cầu rút tiền
+
+d) Điều kiện kết thúc Use Case:
+- Yêu cầu rút tiền bị từ chối thành công.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra trạng thái hợp lệ, lưu lý do từ chối, lưu lịch sử duyệt.
+
+
+2.11.7 UC11-070 / Quản trị viên xem danh sách tài khoản ngân hàng
+
+a) Điều kiện tiên quyết:
+• Quản trị viên đã đăng nhập vào hệ thống.
+
+b) Luồng sự kiện chi tiết:
+1. Quản trị viên truy cập màn hình quản lý tài khoản ngân hàng, nhập bộ lọc (userId, bankCode).
+2. Hệ thống truy vấn danh sách tài khoản ngân hàng theo bộ lọc, phân trang, trả về dữ liệu.
+3. Trả về danh sách tài khoản ngân hàng cho quản trị viên.
+
+c) Màn hình liên quan:
+- MH11-01-07 – Quản lý tài khoản ngân hàng
+
+d) Điều kiện kết thúc Use Case:
+- Quản trị viên nhận được danh sách tài khoản ngân hàng theo tiêu chí đã chọn.
+
+e) Một số yêu cầu/challenge:
+- Tối ưu truy vấn, lọc động, phân trang.
+
+
+2.11.8 UC11-080 / Quản trị viên xem thống kê hệ thống ví & giao dịch
+
+a) Điều kiện tiên quyết:
+• Quản trị viên đã đăng nhập vào hệ thống.
+
+b) Luồng sự kiện chi tiết:
+1. Quản trị viên truy cập màn hình thống kê hệ thống.
+2. Hệ thống tổng hợp các chỉ số: tổng số ví, ví active, tổng giao dịch, giao dịch thành công/thất bại, tổng yêu cầu rút tiền, yêu cầu rút tiền đang chờ duyệt/đã duyệt, tổng tài khoản ngân hàng, tỷ lệ giao dịch thành công, thời gian sinh thống kê.
+3. Trả về dữ liệu thống kê cho quản trị viên.
+
+c) Màn hình liên quan:
+- MH11-01-08 – Thống kê hệ thống ví & giao dịch
+
+d) Điều kiện kết thúc Use Case:
+- Quản trị viên nhận được dữ liệu thống kê hệ thống.
+
+e) Một số yêu cầu/challenge:
+- Tổng hợp dữ liệu đa nguồn, tối ưu hiệu năng truy vấn.
+
+
+2.11.9 UC11-090 / Quản trị viên xem danh sách giao dịch nghi ngờ
+
+a) Điều kiện tiên quyết:
+• Quản trị viên đã đăng nhập vào hệ thống.
+
+b) Luồng sự kiện chi tiết:
+1. Quản trị viên truy cập màn hình giao dịch nghi ngờ, chọn tiêu chí lọc (số tiền lớn, giao dịch thất bại, giao dịch xử lý lâu).
+2. Hệ thống truy vấn danh sách giao dịch nghi ngờ theo tiêu chí, phân trang, trả về dữ liệu.
+3. Trả về danh sách giao dịch nghi ngờ cho quản trị viên.
+
+c) Màn hình liên quan:
+- MH11-01-09 – Giao dịch nghi ngờ
+
+d) Điều kiện kết thúc Use Case:
+- Quản trị viên nhận được danh sách giao dịch nghi ngờ theo tiêu chí đã chọn.
+
+e) Một số yêu cầu/challenge:
+- Xác định tiêu chí nghi ngờ, tổng hợp dữ liệu đa nguồn, tối ưu hiệu năng truy vấn.
+
+
+2.12 Phân hệ Thanh toán & nạp tiền
+
+2.12.1 UC12-010 / Người dùng thực hiện thanh toán đơn hàng
+
+a) Điều kiện tiên quyết:
+• Người dùng đã đăng nhập vào hệ thống.
+• Đơn hàng và giao dịch thanh toán tồn tại, trạng thái hợp lệ.
+
+b) Luồng sự kiện chi tiết:
+1. Người dùng truy cập màn hình thanh toán, chọn phương thức thanh toán (ví, trực tiếp, VNPAY...).
+2. Hệ thống kiểm tra quyền truy cập, trạng thái giao dịch, số dư ví nếu chọn thanh toán qua ví.
+3. Nếu đủ điều kiện, hệ thống trừ tiền ví, tạo bản ghi WalletReservation, cập nhật trạng thái giao dịch sang PROCESSING.
+4. Sinh event PaymentProcessEvent, lưu vào bảng Outbox để xử lý bất đồng bộ (Kafka).
+   - Event `PAYMENT_PROCECSSING` (topic: payment.payment.processing, producer: wallet service) được gửi lên Kafka, các service liên quan (transaction, notify) sẽ lắng nghe để xử lý tiếp trạng thái giao dịch, kiểm tra số dư ví, sinh URL thanh toán nếu qua VNPAY.
+5. Nếu chọn thanh toán qua VNPAY, hệ thống sinh URL thanh toán, lưu PaymentAttempt, trả về cho người dùng.
+6. Khi thanh toán thành công, event `PAYMENT_SUCCESS` (topic: payment.success, producer: wallet service) được gửi lên Kafka, transaction service nhận event, cập nhật trạng thái đơn hàng sang PAID, trạng thái thanh toán sang SUCCESS.
+7. Nếu giao dịch bị huỷ, event `PAYMENT_CANCEL_SUCCESS` hoặc `PAYMENT_CANCEL_FAILED` sẽ được gửi lên Kafka để các service cập nhật trạng thái liên quan.
+8. Trả về thông báo "payment processing, please wait" cho người dùng.
+9. Nếu có lỗi, trả về thông báo lỗi rõ ràng.
+
+c) Màn hình liên quan:
+- MH12-01-01 – Thanh toán đơn hàng
+
+d) Điều kiện kết thúc Use Case:
+- Giao dịch chuyển sang trạng thái PROCESSING, tiền ví bị trừ nếu chọn ví.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra trạng thái giao dịch, số dư ví, xử lý event bất đồng bộ, tích hợp nhiều phương thức thanh toán, tracking event log.
+
+
+2.12.2 UC12-020 / Người dùng kiểm tra trạng thái giao dịch thanh toán
+
+a) Điều kiện tiên quyết:
+• Người dùng đã đăng nhập vào hệ thống.
+• Giao dịch thanh toán tồn tại.
+
+b) Luồng sự kiện chi tiết:
+1. Người dùng truy cập màn hình kiểm tra trạng thái giao dịch, nhập paymentId hoặc orderId.
+2. Hệ thống truy vấn thông tin giao dịch, trả về trạng thái hiện tại.
+3. Nếu không tìm thấy giao dịch, trả về lỗi rõ ràng.
+
+c) Màn hình liên quan:
+- MH12-01-02 – Trạng thái giao dịch thanh toán
+
+d) Điều kiện kết thúc Use Case:
+- Người dùng nhận được trạng thái giao dịch thanh toán.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra quyền truy cập, xử lý lỗi rõ ràng.
+
+
+2.12.3 UC12-030 / Người dùng nạp tiền vào ví
+
+a) Điều kiện tiên quyết:
+• Người dùng đã đăng nhập vào hệ thống.
+
+b) Luồng sự kiện chi tiết:
+1. Người dùng truy cập màn hình nạp tiền, nhập số tiền, chọn phương thức nạp.
+2. Hệ thống tạo bản ghi Payment với trạng thái CREATED, sinh URL thanh toán nếu qua VNPAY, lưu PaymentAttempt.
+3. Trả về thông báo "Wallet deposit initiated" cho người dùng.
+
+c) Màn hình liên quan:
+- MH12-01-03 – Nạp tiền vào ví
+
+d) Điều kiện kết thúc Use Case:
+- Giao dịch nạp tiền được ghi nhận, trạng thái CREATED.
+
+e) Một số yêu cầu/challenge:
+- Tích hợp nhiều phương thức nạp tiền, kiểm tra trạng thái giao dịch.
+
+
+2.12.4 UC12-040 / Xử lý callback từ nhà cung cấp thanh toán
+
+a) Điều kiện tiên quyết:
+• Hệ thống nhận callback từ nhà cung cấp (VNPAY).
+
+b) Luồng sự kiện chi tiết:
+1. Hệ thống nhận callback, kiểm tra mã giao dịch, trạng thái trả về.
+2. Nếu thành công, cập nhật trạng thái giao dịch sang SUCCEEDED, lưu PaymentAttempt.
+3. Sinh event PaymentSuccessedEvent, lưu vào bảng Outbox để xử lý bất đồng bộ (Kafka).
+4. Trả về thông báo thành công cho nhà cung cấp.
+5. Nếu thất bại, trả về thông báo lỗi.
+
+c) Màn hình liên quan:
+- MH12-01-04 – Callback thanh toán
+
+d) Điều kiện kết thúc Use Case:
+- Giao dịch được cập nhật trạng thái SUCCEEDED, event thành công được sinh ra.
+
+e) Một số yêu cầu/challenge:
+- Kiểm tra trạng thái callback, lưu lịch sử giao dịch, xử lý event bất đồng bộ.
+
+

@@ -421,8 +421,7 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
         String token = this.jwtUtils.generateResetPasswordToken(user);
-        String var10000 = ConstString.DOMAIN_NAME.getValue();
-        String url = var10000 + "reset-password?token=" + token;
+        String url = "https://wezd.io.vn/" + "reset-password?token=" + token;
         eventProducer.forgotPassword(
                 PasswordResetEvent.builder()
                         .email(email)

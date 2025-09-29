@@ -70,23 +70,8 @@ public class ProductServiceImpl implements ProductService {
 
         productRepository.save(product);
 
-        ProductVariant productVariant = ProductVariant.builder()
-                .productId(product.getId())
-                .attributes(rq.getAttributesVariant())
-                .attributesHash(rq.getAttributesHash())
-                .price(rq.getPrice())
-                .availableQty(rq.getAvailableQty())
-                .status(Status.ACTIVE)
-                .reservedQty(0)
-                .soldQty(0)
-                .sku(null)
-                .build();
-
-        productVariantRepository.save(productVariant);
 
         map.put("product", product);
-
-        map.put("productVariant", productVariant);
 
         return map;
     }

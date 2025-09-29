@@ -1,0 +1,321 @@
+# BÁO CÁO CHI TIẾT CHỨC NĂNG ĐÃ TRIỂN KHAI - USER SERVICE
+
+---
+
+## 1. Đăng ký tài khoản
+
+## 1. Đăng ký tài khoản
+
+  1. Người dùng gửi yêu cầu POST tới API `/auth/register` với thông tin đăng ký (email, username, password).
+  2. AuthController nhận request, kiểm tra hợp lệ đầu vào (validate email, password).
+  3. Service kiểm tra trùng email/username trong UserRepository (DB).
+  4. Nếu hợp lệ, tạo mới user, mã hóa mật khẩu (Bcrypt), lưu vào DB.
+  5. Sinh token kích hoạt, lưu log đăng ký, gửi email xác thực tới user qua NotificationService.
+  6. User nhận email, click link xác thực, controller nhận token, xác thực và kích hoạt tài khoản.
+  7. Trả về kết quả thành công hoặc lỗi nếu có.
+- **Công nghệ sử dụng:** Spring Security, JWT, EmailService, JPA
+- **Thách thức gặp phải:**
+  - Chống spam đăng ký, xác thực email, bảo mật thông tin đầu vào, kiểm tra trùng lặp user.
+- **Cách giải quyết:**
+  - Kiểm tra trùng email/username, validate đầu vào, mã hóa mật khẩu, sinh token xác thực có thời hạn, gửi email xác thực, lưu log đăng ký, kiểm tra trạng thái kích hoạt khi đăng nhập.
+
+---
+
+## 2. Đăng nhập
+- **Dịch vụ liên quan:** AuthController, UserAuth, Redis
+- **Luồng hoạt động:**
+  1. Người dùng gửi yêu cầu đăng nhập qua API `/auth/login`.
+  2. Hệ thống xác thực thông tin, sinh JWT, kiểm tra OTP nếu bật 2FA.
+  3. Token được trả về, dùng cho các request tiếp theo.
+- **Công nghệ sử dụng:** Spring Security, JWT, Redis
+- **Thách thức:**
+  - Chống brute-force, bảo mật thông tin đăng nhập, xác thực đa lớp.
+- **Cách giải quyết:**
+  - Giới hạn số lần đăng nhập, lưu log, kiểm tra OTP qua Redis, xác thực thiết bị tin cậy.
+
+---
+
+## 3. Quên mật khẩu
+- **Dịch vụ liên quan:** AuthController, UserAuth, Email Service
+- **Luồng hoạt động:**
+  1. Người dùng gửi yêu cầu quên mật khẩu qua API `/auth/forgot-password`.
+  2. Hệ thống gửi email chứa token xác thực.
+  3. Người dùng xác thực token, đặt lại mật khẩu mới.
+- **Công nghệ sử dụng:** Spring Security, Email Service, JWT
+- **Thách thức:**
+  - Bảo mật token reset, chống lộ thông tin, xác thực email.
+- **Cách giải quyết:**
+  - Token có thời hạn, kiểm tra email hợp lệ, lưu log reset mật khẩu.
+
+---
+
+## 4. Đổi mật khẩu
+- **Dịch vụ liên quan:** AuthController, UserAuth
+- **Luồng hoạt động:**
+  1. Người dùng gửi yêu cầu đổi mật khẩu qua API `/auth/change-password`.
+  2. Hệ thống xác thực user, kiểm tra mật khẩu cũ, cập nhật mật khẩu mới.
+- **Công nghệ sử dụng:** Spring Security, JPA
+- **Thách thức:**
+  - Bảo mật mật khẩu, kiểm tra lịch sử đổi mật khẩu, chống reuse password.
+- **Cách giải quyết:**
+  - Mã hóa mật khẩu, lưu lịch sử đổi mật khẩu, kiểm tra trùng lặp.
+
+---
+
+## 5. Xác thực 2FA (OTP)
+- **Dịch vụ liên quan:** AuthController, Redis
+- **Luồng hoạt động:**
+  1. Người dùng bật/tắt 2FA qua API `/auth/enable-2fa` hoặc `/auth/disable-2fa`.
+  2. Khi đăng nhập, hệ thống gửi OTP qua email/SMS, lưu OTP trên Redis.
+
+  ## 1. Đăng ký tài khoản
+
+  ### Luồng hoạt động
+    1. Người dùng gửi yêu cầu POST tới API `/auth/register` với thông tin đăng ký (email, username, password).
+    2. AuthController nhận request, kiểm tra hợp lệ đầu vào (validate email, password).
+    3. Service kiểm tra trùng email/username trong UserRepository (DB).
+    4. Nếu hợp lệ, tạo mới user, mã hóa mật khẩu (Bcrypt), lưu vào DB.
+    5. Sinh token kích hoạt, lưu log đăng ký, gửi email xác thực tới user qua NotificationService.
+    6. User nhận email, click link xác thực, controller nhận token, xác thực và kích hoạt tài khoản.
+    7. Trả về kết quả thành công hoặc lỗi nếu có.
+
+  ### Công nghệ sử dụng
+  Spring Security, JWT, EmailService, JPA
+
+  ### Thách thức gặp phải
+    - Chống spam đăng ký, xác thực email, bảo mật thông tin đầu vào, kiểm tra trùng lặp user.
+
+  ### Cách giải quyết
+    - Kiểm tra trùng email/username, validate đầu vào, mã hóa mật khẩu, sinh token xác thực có thời hạn, gửi email xác thực, lưu log đăng ký, kiểm tra trạng thái kích hoạt khi đăng nhập.
+
+  ### Mã code mẫu
+  **AuthController.java**
+  ```java
+- **Công nghệ sử dụng:** JPA, File upload, Audit log
+- **Thách thức:**
+  - Bảo mật thông tin cá nhân, kiểm soát file upload.
+- **Cách giải quyết:**
+  - Kiểm tra quyền, lưu lịch sử thay đổi, cấu hình upload file an toàn.
+
+  **AuthServiceImpl.java**
+  ```java
+
+---
+
+## 7. Quản lý địa chỉ thanh toán
+- **Dịch vụ liên quan:** UserInforController, BillingAddress
+- **Luồng hoạt động:**
+  1. Người dùng thêm/cập nhật địa chỉ thanh toán qua API `/billing-address`.
+  2. Hệ thống kiểm tra quyền, lưu thông tin vào DB.
+- **Công nghệ sử dụng:** JPA
+- **Thách thức:**
+  - Đảm bảo toàn vẹn dữ liệu, bảo mật địa chỉ.
+- **Cách giải quyết:**
+  - Kiểm tra quyền, xác thực đầu vào, lưu log thay đổi.
+
+---
+
+## 8. Quản lý tuỳ chọn cá nhân (preference)
+- **Dịch vụ liên quan:** UserInforController, Preference
+- **Luồng hoạt động:**
+  1. Người dùng xem/cập nhật tuỳ chọn cá nhân qua API `/preference`.
+  2. Hệ thống kiểm tra quyền, lưu thông tin vào DB.
+- **Công nghệ sử dụng:** JPA
+- **Thách thức:**
+  - Bảo mật thông tin preference, đồng bộ dữ liệu.
+- **Cách giải quyết:**
+  - Kiểm tra quyền, xác thực đầu vào, lưu log thay đổi.
+
+---
+
+## 9. Quản lý phân quyền, vai trò
+- **Dịch vụ liên quan:** AdminController, UserRole, Role
+- **Luồng hoạt động:**
+  1. Admin gán/xoá vai trò cho user qua API `/admin/users/{userId}/roles`.
+  2. Hệ thống kiểm tra quyền admin, cập nhật DB, ghi log thay đổi.
+- **Công nghệ sử dụng:** Spring Security, JPA
+- **Thách thức:**
+  - Kiểm soát truy cập, tránh lạm quyền.
+- **Cách giải quyết:**
+  - Áp dụng annotation @PreAuthorize, kiểm tra quyền ở mỗi request, lưu log thay đổi role.
+
+---
+
+## 10. Quản lý KYC & xác thực định danh
+- **Dịch vụ liên quan:** KycController, UserVerification, DeleteKycRequest, FileStorageService
+- **Luồng hoạt động:**
+  1. Người dùng gửi hồ sơ KYC, upload tài liệu qua API `/kyc`.
+  2. Admin duyệt/từ chối hồ sơ, cập nhật trạng thái, ghi log.
+- **Công nghệ sử dụng:** JPA, File upload, Audit log
+- **Thách thức:**
+  - Quản lý file định danh, bảo mật tài liệu.
+- **Cách giải quyết:**
+  - Lưu file an toàn, phân quyền truy xuất, ghi log duyệt/từ chối.
+
+---
+
+## 11. Quản lý đánh giá seller
+- **Dịch vụ liên quan:** SellerController, SellerRating, SellerApplication
+- **Luồng hoạt động:**
+  1. Người dùng gửi đánh giá seller qua API `/seller/rating`.
+  2. Hệ thống kiểm tra quyền, lưu đánh giá, cập nhật điểm seller.
+- **Công nghệ sử dụng:** JPA, Audit log
+- **Thách thức:**
+  - Chống spam đánh giá, đảm bảo công bằng.
+- **Cách giải quyết:**
+  - Kiểm tra quyền, giới hạn số lần đánh giá, phân trang khi truy vấn.
+
+---
+
+
+  **RegisterRequest.java**
+  ```java
+## 12. Quản lý file & upload
+- **Dịch vụ liên quan:** FileUploadController, FileStorageService, FileResourceConfig
+- **Luồng hoạt động:**
+  1. Người dùng upload avatar, tài liệu KYC qua API `/file/upload`.
+  2. Hệ thống kiểm tra định dạng, lưu file, trả về URL, phân quyền truy xuất file.
+- **Công nghệ sử dụng:** Spring Web, FileStorageService
+- **Thách thức:**
+  - Bảo mật file upload, kiểm soát truy xuất.
+- **Cách giải quyết:**
+  - Kiểm tra định dạng, lưu file theo userId, phân quyền truy xuất.
+
+---
+
+## 13. Quản lý hoạt động, thống kê
+- **Dịch vụ liên quan:** AdminController, AuditLog, LoginHistory, DeviceManager
+- **Luồng hoạt động:**
+  1. Admin lấy thống kê user, tổng hợp hoạt động qua API `/admin/users/stats`.
+  2. Hệ thống truy vấn động, phân trang, tổng hợp số liệu.
+- **Công nghệ sử dụng:** JPA, QueryDSL, Audit log
+- **Thách thức:**
+  - Truy vấn dữ liệu lớn, tối ưu hiệu năng.
+- **Cách giải quyết:**
+  - Áp dụng phân trang, chỉ mục DB, truy vấn động với QueryDSL.
+
+---
+
+## 14. Cung cấp JWKS (public key) cho các service
+- **Dịch vụ liên quan:** JwksController, RsaKeyConfig
+- **Luồng hoạt động:**
+  1. Các service khác gọi endpoint JWKS để lấy public key xác thực token qua API `/jwks`.
+- **Công nghệ sử dụng:** JJWT, RsaKeyConfig, JWKS endpoint
+- **Thách thức:**
+  - Đảm bảo key luôn hợp lệ, bảo mật khi thay đổi key.
+- **Cách giải quyết:**
+  - Sinh key pair an toàn, cung cấp endpoint JWKS, tự động cập nhật khi thay đổi key.
+
+---
+
+Các chức năng trên đều được kiểm thử thực tế, đảm bảo bảo mật, hiệu năng và khả năng mở rộng. Nếu cần chi tiết code mẫu cho từng chức năng, vui lòng yêu cầu cụ thể!
+# BÁO CÁO CHI TIẾT CHỨC NĂNG ĐÃ TRIỂN KHAI - USER SERVICE
+
+---
+
+## 1. Đăng ký, đăng nhập, xác thực người dùng
+- **Dịch vụ liên quan:** AuthController, UserAuth, Redis, Email Service
+- **Luồng hoạt động:**
+  1. Người dùng gửi yêu cầu đăng ký/đăng nhập qua API.
+  2. Hệ thống xác thực thông tin, sinh JWT, lưu trạng thái xác thực, gửi OTP nếu bật 2FA.
+  3. Token được trả về, dùng cho các request tiếp theo.
+  4. Quên mật khẩu: gửi email xác thực, reset qua token.
+- **Công nghệ sử dụng:** Spring Security, OAuth2 Authorization Server, JWT/JWKS, Redis, Email Service
+- **Thách thức:**
+  - Bảo mật xác thực, chống brute-force, quản lý OTP, session đa thiết bị.
+- **Cách giải quyết:**
+  - Sử dụng JWT/JWKS cho xác thực stateless, Redis lưu OTP, kiểm soát số lần gửi OTP, xác thực thiết bị tin cậy, audit log đăng nhập.
+
+---
+
+## 2. Quản lý thông tin người dùng
+- **Dịch vụ liên quan:** UserInforController, UserInf, BillingAddress, Preference, FileStorageService
+- **Luồng hoạt động:**
+  1. Người dùng xem/cập nhật thông tin cá nhân, avatar, địa chỉ thanh toán, tuỳ chọn cá nhân qua API.
+  2. Hệ thống kiểm tra quyền, ghi log thay đổi, upload file avatar.
+- **Công nghệ sử dụng:** Spring Data JPA, File upload, Audit log
+- **Thách thức:**
+  - Đảm bảo toàn vẹn dữ liệu, bảo mật thông tin cá nhân, quản lý file upload.
+- **Cách giải quyết:**
+  - Kiểm tra quyền trước khi cập nhật, lưu lịch sử thay đổi, cấu hình upload file an toàn, phân quyền truy xuất file.
+
+---
+
+## 3. Quản lý phân quyền, vai trò
+- **Dịch vụ liên quan:** AdminController, UserRole, Role
+- **Luồng hoạt động:**
+  1. Admin gán/xoá vai trò cho user, duyệt trạng thái seller qua API.
+  2. Hệ thống kiểm tra quyền admin, cập nhật DB, ghi log thay đổi.
+- **Công nghệ sử dụng:** Spring Security, JPA
+- **Thách thức:**
+  - Kiểm soát truy cập, tránh lạm quyền, đồng bộ trạng thái role.
+- **Cách giải quyết:**
+  - Áp dụng annotation @PreAuthorize, kiểm tra quyền ở mỗi request, lưu log thay đổi role.
+
+---
+
+## 4. Quản lý KYC & xác thực định danh
+- **Dịch vụ liên quan:** KycController, UserVerification, DeleteKycRequest, FileStorageService
+- **Luồng hoạt động:**
+  1. Người dùng gửi hồ sơ KYC, upload tài liệu qua API.
+  2. Admin duyệt/từ chối hồ sơ, cập nhật trạng thái, ghi log.
+- **Công nghệ sử dụng:** JPA, File upload, Audit log
+- **Thách thức:**
+  - Quản lý file định danh, bảo mật tài liệu, kiểm soát quy trình duyệt.
+- **Cách giải quyết:**
+  - Lưu file an toàn, phân quyền truy xuất, ghi log duyệt/từ chối, kiểm tra trạng thái hồ sơ.
+
+---
+
+## 5. Quản lý đánh giá seller
+- **Dịch vụ liên quan:** SellerController, SellerRating, SellerApplication
+- **Luồng hoạt động:**
+  1. Người dùng gửi đánh giá seller, xem tổng hợp điểm qua API.
+  2. Hệ thống kiểm tra quyền, lưu đánh giá, cập nhật điểm seller.
+- **Công nghệ sử dụng:** JPA, Audit log
+- **Thách thức:**
+  - Chống spam đánh giá, đảm bảo công bằng, tổng hợp điểm chính xác.
+- **Cách giải quyết:**
+  - Kiểm tra quyền, giới hạn số lần đánh giá, phân trang khi truy vấn, tổng hợp điểm qua truy vấn động.
+
+---
+
+## 6. Quản lý file & upload
+- **Dịch vụ liên quan:** FileUploadController, FileStorageService, FileResourceConfig
+- **Luồng hoạt động:**
+  1. Người dùng upload avatar, tài liệu KYC qua API.
+  2. Hệ thống kiểm tra định dạng, lưu file, trả về URL, phân quyền truy xuất file.
+- **Công nghệ sử dụng:** Spring Web, FileStorageService
+- **Thách thức:**
+  - Bảo mật file upload, kiểm soát truy xuất, lưu trữ hiệu quả.
+- **Cách giải quyết:**
+  - Kiểm tra định dạng, lưu file theo userId, phân quyền truy xuất, cấu hình static resource.
+
+---
+
+## 7. Quản lý hoạt động, thống kê
+- **Dịch vụ liên quan:** AdminController, AuditLog, LoginHistory, DeviceManager
+- **Luồng hoạt động:**
+  1. Admin lấy thống kê user, tổng hợp hoạt động, lịch sử đăng nhập qua API.
+  2. Hệ thống truy vấn động, phân trang, tổng hợp số liệu.
+- **Công nghệ sử dụng:** JPA, QueryDSL, Audit log
+- **Thách thức:**
+  - Truy vấn dữ liệu lớn, tối ưu hiệu năng, bảo mật thông tin thống kê.
+- **Cách giải quyết:**
+  - Áp dụng phân trang, chỉ mục DB, truy vấn động với QueryDSL, phân quyền truy cập thống kê.
+
+---
+
+## 8. Cung cấp JWKS (public key) cho các service
+- **Dịch vụ liên quan:** JwksController, RsaKeyConfig
+- **Luồng hoạt động:**
+  1. Các service khác gọi endpoint JWKS để lấy public key xác thực token.
+- **Công nghệ sử dụng:** JJWT, RsaKeyConfig, JWKS endpoint
+- **Thách thức:**
+  - Đảm bảo key luôn hợp lệ, bảo mật khi thay đổi key.
+- **Cách giải quyết:**
+  - Sinh key pair an toàn, cung cấp endpoint JWKS, tự động cập nhật khi thay đổi key.
+
+---
+
+Các chức năng trên đều được kiểm thử thực tế, đảm bảo bảo mật, hiệu năng và khả năng mở rộng. Nếu cần chi tiết code mẫu cho từng chức năng, vui lòng yêu cầu cụ thể!
