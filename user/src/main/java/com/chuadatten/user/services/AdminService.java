@@ -1,16 +1,25 @@
 package com.chuadatten.user.services;
 
-import com.chuadatten.user.common.RoleName;
-import com.chuadatten.user.common.Status;
-import com.chuadatten.user.dto.*;
-import com.chuadatten.user.dto.request.KycReviewRequest;
-import com.chuadatten.user.dto.request.KycRejectRequest;
-import com.chuadatten.user.dto.request.SellerApplicationReviewRequest;
-import com.chuadatten.user.responses.ApiResponse;
-
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+
+import com.chuadatten.user.common.RoleName;
+import com.chuadatten.user.common.Status;
+import com.chuadatten.user.dto.AuditLogDto;
+import com.chuadatten.user.dto.DeviceManagerDto;
+import com.chuadatten.user.dto.KycDto;
+import com.chuadatten.user.dto.LoginHistoryDto;
+import com.chuadatten.user.dto.MessageErrorDto;
+import com.chuadatten.user.dto.SellerApplicationDto;
+import com.chuadatten.user.dto.SellerRatingDto;
+import com.chuadatten.user.dto.UserActivitySummaryDto;
+import com.chuadatten.user.dto.UserInfDto;
+import com.chuadatten.user.dto.UserStatsDto;
+import com.chuadatten.user.dto.request.KycRejectRequest;
+import com.chuadatten.user.dto.request.KycReviewRequest;
+import com.chuadatten.user.dto.request.SellerApplicationReviewRequest;
+import com.chuadatten.user.responses.ApiResponse;
 
 public interface AdminService {
     /*

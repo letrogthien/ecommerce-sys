@@ -1,18 +1,33 @@
 package com.chuadatten.user.controller;
 
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.chuadatten.user.common.RoleName;
 import com.chuadatten.user.common.Status;
-import com.chuadatten.user.dto.*;
-import com.chuadatten.user.dto.request.KycReviewRequest;
+import com.chuadatten.user.dto.DeviceManagerDto;
+import com.chuadatten.user.dto.KycDto;
+import com.chuadatten.user.dto.LoginHistoryDto;
+import com.chuadatten.user.dto.SellerApplicationDto;
+import com.chuadatten.user.dto.UserActivitySummaryDto;
+import com.chuadatten.user.dto.UserInfDto;
+import com.chuadatten.user.dto.UserStatsDto;
 import com.chuadatten.user.dto.request.KycRejectRequest;
+import com.chuadatten.user.dto.request.KycReviewRequest;
 import com.chuadatten.user.dto.request.SellerApplicationReviewRequest;
 import com.chuadatten.user.responses.ApiResponse;
 import com.chuadatten.user.services.AdminService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/user-service/admin")

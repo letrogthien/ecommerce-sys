@@ -25,6 +25,8 @@ public class GetTokenResolver implements BearerTokenResolver {
                 "/api/v1/user-service/auth/access-token",
                 "/api/v1/user-service/search/user/name",
                 "/api/v1/user-service/auth/cleaer-cookie",
+                "/api/v1/user-service/auth/logout-all",
+
                 "/swagger-ui/",
                 "/v3/api-docs/",
                 "/api/v1/oauth2/jwks",

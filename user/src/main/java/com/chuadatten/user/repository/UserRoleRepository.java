@@ -1,5 +1,8 @@
 package com.chuadatten.user.repository;
 
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,9 +11,6 @@ import org.springframework.stereotype.Repository;
 import com.chuadatten.user.entity.Role;
 import com.chuadatten.user.entity.UserAuth;
 import com.chuadatten.user.entity.UserRole;
-
-import java.util.List;
-import java.util.UUID;
 
 @Repository
 public interface UserRoleRepository extends JpaRepository<UserRole, UUID> {

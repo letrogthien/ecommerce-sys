@@ -1,0 +1,342 @@
+package com.chuadatten.product.repository.impl;
+
+import com.chuadatten.product.common.Status;
+import com.chuadatten.product.dto.SearchFacetsDto;
+import com.chuadatten.product.dto.SearchResultDto;
+import com.chuadatten.product.entity.Product;
+import com.chuadatten.product.repository.ProductSearchRepository;
+import com.chuadatten.product.requests.SearchRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.*;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.TextCriteria;
+import org.springframework.data.mongodb.core.query.TextQuery;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
+
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Implementation of ProductSearchRepository using MongoDB aggregation framework
+ */
+@Repository
+@RequiredArgsConstructor
+@Slf4j
+public class ProductSearchRepositoryImpl implements ProductSearchRepository {
+
+    private final MongoTemplate mongoTemplate;
+    
+    private static final String PRODUCTS_COLLECTION = "products";
+    private static final String CATEGORY_IDS_FIELD = "categoryIds";
+    private static final String COUNT_FIELD = "count";
+    private static final String VALUE_FIELD = "value";
+    private static final String BASE_PRICE_FIELD = "basePrice";
+    private static final String RATING_AVG_FIELD = "ratingAvg";
+    private static final String CREATED_AT_FIELD = "createdAt";
+    private static final String STATUS_FIELD = "status";
+
+    @Override
+    public SearchResultDto<Product> searchProducts(SearchRequest request) {
+        log.debug("Searching products with request: {}", request);
+        long startTime = System.currentTimeMillis();
+
+        try {
+            // Build aggregation pipeline
+            List<AggregationOperation> pipeline = buildSearchPipeline(request);
+            
+            // Add pagination
+            pipeline.add(Aggregation.skip((long) request.getPage() * request.getSize()));
+            pipeline.add(Aggregation.limit(request.getSize()));
+            
+            // Execute search
+            Aggregation aggregation = Aggregation.newAggregation(pipeline);
+            List<Product> products = mongoTemplate.aggregate(aggregation, PRODUCTS_COLLECTION, Product.class)
+                    .getMappedResults();
+            
+            // Get total count
+            long totalCount = getTotalCount(request);
+            
+            // Calculate pagination info
+            int totalPages = (int) Math.ceil((double) totalCount / request.getSize());
+            
+            long executionTime = System.currentTimeMillis() - startTime;
+            log.debug("Search completed in {} ms, found {} products", executionTime, products.size());
+            
+            return SearchResultDto.<Product>builder()
+                    .items(products)
+                    .totalItems(totalCount)
+                    .currentPage(request.getPage())
+                    .pageSize(request.getSize())
+                    .totalPages(totalPages)
+                    .executionTimeMs(executionTime)
+                    .build();
+                    
+        } catch (Exception e) {
+            log.error("Error searching products", e);
+            return SearchResultDto.<Product>builder()
+                    .items(Collections.emptyList())
+                    .totalItems(0)
+                    .currentPage(request.getPage())
+                    .pageSize(request.getSize())
+                    .totalPages(0)
+                    .executionTimeMs(System.currentTimeMillis() - startTime)
+                    .build();
+        }
+    }
+
+    @Override
+    public SearchFacetsDto getSearchFacets(SearchRequest request) {
+        log.debug("Getting search facets for request: {}", request);
+        
+        try {
+            // Create base match criteria
+            Criteria matchCriteria = buildBaseCriteria(request, false); // Don't include text search for facets
+            
+            // Build facet aggregation pipeline
+            List<AggregationOperation> pipeline = new ArrayList<>();
+            pipeline.add(Aggregation.match(matchCriteria));
+            
+            // Facet aggregation for different dimensions
+            FacetOperation facetOperation = Aggregation.facet()
+                    // Category facets
+                    .and(Aggregation.unwind(CATEGORY_IDS_FIELD),
+                         Aggregation.group(CATEGORY_IDS_FIELD).count().as(COUNT_FIELD),
+                         Aggregation.project(COUNT_FIELD).and("_id").as(VALUE_FIELD))
+                    .as("categories")
+                    
+                    // Price range facets
+                    .and(Aggregation.bucket(BASE_PRICE_FIELD)
+                            .withBoundaries(0, 100000, 500000, 1000000, 5000000, Double.MAX_VALUE)
+                            .withDefaultBucket("other"))
+                    .as("priceRanges")
+                    
+                    // Tags facets
+                    .and(Aggregation.unwind("tags"),
+                         Aggregation.group("tags").count().as(COUNT_FIELD),
+                         Aggregation.project(COUNT_FIELD).and("_id").as(VALUE_FIELD))
+                    .as("tags")
+                    
+                    // Rating range facets
+                    .and(Aggregation.bucket(RATING_AVG_FIELD)
+                            .withBoundaries(0.0, 1.0, 2.0, 3.0, 4.0, 5.0)
+                            .withDefaultBucket("no-rating"))
+                    .as("ratingRanges");
+            
+            pipeline.add(facetOperation);
+            
+            // Execute aggregation
+            Aggregation aggregation = Aggregation.newAggregation(pipeline);
+            AggregationResults<?> rawResults = mongoTemplate.aggregate(aggregation, PRODUCTS_COLLECTION, Map.class);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> facetResults = (Map<String, Object>) rawResults.getUniqueMappedResult();
+            
+            return buildSearchFacets(facetResults);
+            
+        } catch (Exception e) {
+            log.error("Error getting search facets", e);
+            return SearchFacetsDto.builder().build();
+        }
+    }
+
+    @Override
+    public List<String> getProductSuggestions(String partial, int limit) {
+        if (!StringUtils.hasText(partial)) {
+            return Collections.emptyList();
+        }
+        
+        try {
+            // Use regex for partial matching on product name
+            Criteria criteria = Criteria.where("name")
+                    .regex("^" + partial, "i")
+                    .and("active").is(Status.ACTIVE)
+                    .and("softDeletedAt").isNull();
+            
+            List<AggregationOperation> pipeline = Arrays.asList(
+                    Aggregation.match(criteria),
+                    Aggregation.project("name"),
+                    Aggregation.limit(limit)
+            );
+            
+            Aggregation aggregation = Aggregation.newAggregation(pipeline);
+            List<Product> products = mongoTemplate.aggregate(aggregation, "products", Product.class)
+                    .getMappedResults();
+            
+            return products.stream()
+                    .map(Product::getName)
+                    .collect(Collectors.toList());
+                    
+        } catch (Exception e) {
+            log.error("Error getting product suggestions for partial: {}", partial, e);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<AggregationOperation> buildSearchPipeline(SearchRequest request) {
+        List<AggregationOperation> pipeline = new ArrayList<>();
+        
+        // Build match criteria
+        Criteria matchCriteria = buildBaseCriteria(request, true);
+        pipeline.add(Aggregation.match(matchCriteria));
+        
+        // Add sorting
+        Sort sort = buildSort(request);
+        if (sort != null) {
+            pipeline.add(Aggregation.sort(sort));
+        }
+        
+        return pipeline;
+    }
+
+    private Criteria buildBaseCriteria(SearchRequest request, boolean includeTextSearch) {
+        Criteria criteria = new Criteria();
+        List<Criteria> andCriteria = new ArrayList<>();
+        
+        // Text search
+        if (includeTextSearch && StringUtils.hasText(request.getKeyword())) {
+            TextCriteria textCriteria = TextCriteria.forDefaultLanguage()
+                    .matchingAny(request.getKeyword().split("\\s+"));
+            criteria = criteria.andOperator(Criteria.where("$text").is(textCriteria));
+        }
+        
+        // Active status filter
+        if (!request.isIncludeInactive()) {
+            andCriteria.add(Criteria.where("active").is(Status.ACTIVE));
+            andCriteria.add(Criteria.where("softDeletedAt").isNull());
+        }
+        
+        // Category filter
+        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
+            andCriteria.add(Criteria.where("categoryIds").in(request.getCategoryIds()));
+        }
+        
+        // Price range filter
+        if (request.getMinPrice() != null || request.getMaxPrice() != null) {
+            Criteria priceCriteria = Criteria.where("basePrice");
+            if (request.getMinPrice() != null) {
+                priceCriteria = priceCriteria.gte(request.getMinPrice());
+            }
+            if (request.getMaxPrice() != null) {
+                priceCriteria = priceCriteria.lte(request.getMaxPrice());
+            }
+            andCriteria.add(priceCriteria);
+        }
+        
+        // Tags filter
+        if (request.getTags() != null && !request.getTags().isEmpty()) {
+            andCriteria.add(Criteria.where("tags").in(request.getTags()));
+        }
+        
+        // Rating filter
+        if (request.getMinRating() != null || request.getMaxRating() != null) {
+            Criteria ratingCriteria = Criteria.where("ratingAvg");
+            if (request.getMinRating() != null) {
+                ratingCriteria = ratingCriteria.gte(request.getMinRating());
+            }
+            if (request.getMaxRating() != null) {
+                ratingCriteria = ratingCriteria.lte(request.getMaxRating());
+            }
+            andCriteria.add(ratingCriteria);
+        }
+        
+        // Attributes filter
+        if (request.getAttributes() != null && !request.getAttributes().isEmpty()) {
+            for (Map.Entry<String, String> attr : request.getAttributes().entrySet()) {
+                andCriteria.add(Criteria.where("attributes." + attr.getKey()).is(attr.getValue()));
+            }
+        }
+        
+        if (!andCriteria.isEmpty()) {
+            criteria = criteria.andOperator(andCriteria.toArray(new Criteria[0]));
+        }
+        
+        return criteria;
+    }
+
+    private Sort buildSort(SearchRequest request) {
+        String sortBy = request.getSortBy();
+        Sort.Direction direction = request.getSortDirection();
+        
+        switch (sortBy.toLowerCase()) {
+            case "price":
+                return Sort.by(direction, "basePrice");
+            case "rating":
+                return Sort.by(direction, "ratingAvg");
+            case "createdat":
+            case "created":
+                return Sort.by(direction, "createdAt");
+            case "name":
+                return Sort.by(direction, "name");
+            case "relevance":
+            default:
+                // For text search, MongoDB automatically sorts by text score
+                if (StringUtils.hasText(request.getKeyword())) {
+                    return Sort.by(Sort.Direction.DESC, "score").and(Sort.by(direction, "createdAt"));
+                } else {
+                    return Sort.by(direction, "createdAt");
+                }
+        }
+    }
+
+    private long getTotalCount(SearchRequest request) {
+        try {
+            Criteria criteria = buildBaseCriteria(request, true);
+            
+            if (StringUtils.hasText(request.getKeyword())) {
+                // Use text search query for count
+                TextCriteria textCriteria = TextCriteria.forDefaultLanguage()
+                        .matchingAny(request.getKeyword().split("\\s+"));
+                TextQuery textQuery = TextQuery.queryText(textCriteria);
+                
+                // Add other criteria
+                List<Criteria> andCriteria = new ArrayList<>();
+                if (!request.isIncludeInactive()) {
+                    andCriteria.add(Criteria.where("active").is(Status.ACTIVE));
+                    andCriteria.add(Criteria.where("softDeletedAt").isNull());
+                }
+                
+                if (!andCriteria.isEmpty()) {
+                    textQuery.addCriteria(new Criteria().andOperator(andCriteria.toArray(new Criteria[0])));
+                }
+                
+                return mongoTemplate.count(textQuery, Product.class);
+            } else {
+                // Use regular query for count
+                return mongoTemplate.count(
+                        org.springframework.data.mongodb.core.query.Query.query(criteria),
+                        Product.class
+                );
+            }
+        } catch (Exception e) {
+            log.error("Error getting total count", e);
+            return 0;
+        }
+    }
+
+    private SearchFacetsDto buildSearchFacets(Map<String, Object> facetResults) {
+        SearchFacetsDto.SearchFacetsDtoBuilder builder = SearchFacetsDto.builder();
+        
+        // Process category facets
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> categoryFacets = (List<Map<String, Object>>) facetResults.get("categories");
+        if (categoryFacets != null) {
+            List<SearchFacetsDto.FacetItemDto> categories = categoryFacets.stream()
+                    .map(facet -> SearchFacetsDto.FacetItemDto.builder()
+                            .value((String) facet.get("value"))
+                            .displayName((String) facet.get("value")) // You might want to resolve category names
+                            .count(((Number) facet.get("count")).longValue())
+                            .build())
+                    .collect(Collectors.toList());
+            builder.categories(categories);
+        }
+        
+        // Process other facets similarly...
+        // This is a simplified implementation - you can expand it based on your needs
+        
+        return builder.build();
+    }
+}
