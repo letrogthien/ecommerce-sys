@@ -2,8 +2,8 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://root:root@localhost:27017/product?authSource=admin
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://root:root@localhost:27017/product?authSource=admin}
 
 file: 
-  upload-dir: uploads       
-  base-url: https://product.wezd.io.vn/files
+  upload-dir: ${FILE_UPLOAD_DIR:uploads}
+  base-url: ${FILE_BASE_URL:http://localhost:8082/files}

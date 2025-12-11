@@ -1,4 +1,4 @@
-# Multi-stage build for Spring Boot User Service
+# Multi-stage build for Spring Boot Product Service
 FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
@@ -22,18 +22,21 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+# Install Node.js for search index setup (if needed)
+RUN apk add --no-cache nodejs npm
+
 # Create non-root user
 RUN addgroup -S spring && adduser -S spring -G spring
 
-# Copy JWT keys
-COPY --chown=spring:spring private-access.pem public-access.pem ./
-
 # Create uploads directory
-RUN mkdir -p uploads/kyc uploads/user-avt && \
+RUN mkdir -p uploads/products && \
     chown -R spring:spring uploads
 
 # Copy built JAR from builder
 COPY --from=builder --chown=spring:spring /app/target/*.jar app.jar
+
+# Copy search setup scripts
+COPY --chown=spring:spring setup-search-indexes.js sample-search-data.js ./
 
 # Switch to non-root user
 USER spring:spring
@@ -48,4 +51,3 @@ EXPOSE 8080
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
-
